@@ -1,7 +1,7 @@
 """Make embroidery files from an SVG.
 
 python3 gen.py logo.svg --name "Nimi" --sizes 100,150,200 --machines brother,janome [--working toimiv.pes]
-       [--color "#rrggbb=Niidi nimi"] [--angle 45] [--background "#ffffff"] [--set satin_max=2.5]
+       [--color "#rrggbb=Niidi nimi"] [--angle 45] [--background "#ffffff"] [--set satin_max=2.5] [--plan plan.json]
 
 Writes out/<Nimi> <size>.pes (+ .jef, .bmp), outpos/ (PES v6, underlay points), out/meta.json.
 <size> = longer side in mm, 3 places padded with spaces.
@@ -49,25 +49,28 @@ def main():
     ap.add_argument('--color', action='append', default=[], help='"#rrggbb=thread name"')
     ap.add_argument('--angle', type=float, default=digitize.DEFAULTS['fill_angle'])
     ap.add_argument('--background', default='#ffffff')
+    ap.add_argument('--fabric', help='kangas: ' + ', '.join(digitize.FABRICS))
+    ap.add_argument('--plan', help='plan.json: decisions per shape (see digitize.build)')
     ap.add_argument('--set', action='append', default=[], help='parameter=value (see digitize.DEFAULTS)')
     ap.add_argument('--machines', required=True, help='brother, janome or both: brother,janome')
     a = ap.parse_args()
     mach = [m.strip().lower() for m in a.machines.split(',') if m.strip()]
     fmts = [MACHINES[m][0] for m in mach]
-    cfg = {'fill_angle': a.angle}
+    cfg = dict(digitize.FABRICS[a.fabric]) if a.fabric else {}
+    cfg['fill_angle'] = a.angle
     for kv in a.set:
         k, v = kv.split('='); cfg[k] = float(v)
     names = {k.lower(): v for k, v in (kv.split('=', 1) for kv in a.color)}
     els = design.load(a.svg, a.background)
     os.makedirs('outpos', exist_ok=True); os.makedirs('out', exist_ok=True)
     meta = dict(name=a.name, date=datetime.date.today().isoformat(), params=dict(digitize.DEFAULTS, **cfg),
-                format=('PES v10' if a.working else 'PES v6') if 'pes' in fmts else '', jef='jef' in fmts, files=[], colors=[])
+                fabric=a.fabric or '', plan=a.plan or '', format=('PES v10' if a.working else 'PES v6') if 'pes' in fmts else '', jef='jef' in fmts, files=[], colors=[])
     for col in dict.fromkeys(e['color'] for e in els):
         meta['colors'].append(dict(hex=col, name=names.get(col, col), brother=nearest(col, pec_threads()),
                                    janome=nearest(col, jef_threads())))
     sizes = [float(v) for v in a.sizes.split(',')]
     for size in sizes:
-        p = digitize.build(els, size, names, cfg, ref_size=max(sizes))
+        p = digitize.build(els, size, names, cfg, ref_size=max(sizes), plan=json.load(open(a.plan)) if a.plan else None)
         st = [(x, y) for x, y, c in p.stitches if (c & pe.COMMAND_MASK) == pe.STITCH]
         w = (max(x for x, y in st) - min(x for x, y in st)) / 10; h = (max(y for x, y in st) - min(y for x, y in st)) / 10
         n = round(max(w, h)); fn = f'{a.name} {n:>3}'
@@ -78,7 +81,7 @@ def main():
                 print(f'HOIATUS: {fn} ({w:.0f} x {h:.0f} mm) ei mahu {mname} raami {HW} x {HH} mm')
         if 'jef' in fmts:                                    # Janome: centred
             pe.write_jef(p, f'out/{fn}.jef', {'trims': True}); bmp(p, f'out/{fn}.bmp')
-        dx, dy = -math.floor(min(x for x, y in st) + 1e-6), -math.floor(min(y for x, y in st) + 1e-6)
+        dx, dy = -math.floor(min(x for x, y in st) + 0.5), -math.floor(min(y for x, y in st) + 0.5)   # min rounds to 0
         p.translate(dx, dy)                                  # Brother: origin top left
         json.dump([(x + dx, y + dy) for x, y in p.underlay], open(f'outpos/{fn}.under.json', 'w'))
         p.metadata('name', label)
@@ -90,6 +93,7 @@ def main():
             pes10.to_v10(f'outpos/{fn}.pes', f'out/{fn}.pes', a.working, label)
         else:
             import shutil; shutil.copy(f'outpos/{fn}.pes', f'out/{fn}.pes')
+        meta['kinds'] = sorted(set(meta.get('kinds', [])) | set(getattr(p, 'kinds', [])))
         meta['files'].append(dict(file=fn, w=round(w, 1), h=round(h, 1), label=label))
         print(fn, f'{w:.1f} x {h:.1f} mm', len(st), 'stitches')
     json.dump(meta, open('out/meta.json', 'w'), ensure_ascii=False, indent=1)

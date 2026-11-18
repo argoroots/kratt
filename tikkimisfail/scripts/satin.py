@@ -9,6 +9,23 @@ from shapely.ops import substring
 
 RES = 0.02  # mm per pixel
 
+# satin options (mm unless noted)
+OPTS = dict(
+    short_dist=0.25,     # same-side needle points closer than this (inside of curves) ...
+    short_inset=(0.15, 0.3),  # ... those stitches are shortened by these shares of the width, in turn
+    pull_mm=0.0,         # widen columns by this many mm on each side (pull compensation)
+    min_width=1.0,       # columns narrower than this (mm, median) are widened to it (thin text, towel)
+    pull_pct=0.0,        # widen columns by this % of their width (half on each side)
+    push_mm=0.0,         # shorten free stroke ends by this much (pull along the column)
+    contour_from=2.0,    # column width from which underlay is contour (edge runs) instead of centre walk
+    german_from=4.0,     # ... and from which contour + low zigzag underlay is used
+    split_len=7.0,       # satin stitches longer than this (mm) are split ...
+    split_staggers=4,    # ... with the split point moving 1/4 from stitch to stitch
+    mitre_max=60.0,     # corners turning up to this many degrees: one column, stitches turn round the corner
+    reach=1.5,           # stroke ending against another runs on at most this many widths
+    gap_min=0.3,         # uncovered gaps at least this wide (mm) get a small fill
+)
+
 
 def _mask(poly):
     minx, miny, maxx, maxy = poly.bounds
@@ -120,7 +137,7 @@ def branches(poly, width):
             thr = i if segs[i][0].length >= segs[j][0].length else j
             k_ = ki if thr == i else kj
             segs[thr][k_] = ('t', c)            # through to the outer edge
-    out = []
+    out = []; jends = []
     for ls, e0, e1 in segs:
         cut = 1.0 * width
         if e0[0] == 'e' and ls.length > 2 * cut + 0.2: ls = substring(ls, cut, ls.length)
@@ -131,15 +148,39 @@ def branches(poly, width):
         c = list(ls.coords)
         if len(c) < 2: continue
         for end, e in ((0, e0), (-1, e1)):
-            if e[0] == 't': c[end] = _extend(_back(c, end, width), c[end], poly, width)
+            # a stroke going through to the outer edge goes past it by the pull compensation, like the side
+            # edges of the stroke it crosses (else its end looks short next to them: E stem)
+            if e[0] == 't': c[end] = _extend(_back(c, end, width), c[end], poly, width,
+                                             inset=-(OPTS['pull_mm'] + max(0.0, (OPTS['min_width'] - width) / 2)))
             elif e[0] == 'j': c[end] = _straight(_back(c, end, width), c[end], bend - jc, poly)
         if e0[0] == 'e': c[0] = _extend(_back(c, 0, width), c[0], poly, width)
         if e1[0] == 'e': c[-1] = _extend(_back(c, -1, width), c[-1], poly, width)
-        out.append((c, e0[0] == 'e', e1[0] == 'e'))
+        out.append((c, e0[0] == 'e', e1[0] == 'e', e0[0] in 'et', e1[0] in 'et'))   # caps, closed ends
+        jends += [(len(out) - 1, end) for end, e in ((0, e0), (-1, e1)) if e[0] == 'j']
     # skeleton pixel graph in mm for travel
     H = nx.Graph()
     for a, b, d in G.edges(data=True): H.add_edge(to_mm(a), to_mm(b), weight=d['weight'] * RES)
+    H.graph['jends'] = jends
     return out, H
+
+
+def _reach(out, jends, poly, width):
+    """a stroke that ends against another one runs on until both of its sides are inside the other
+    stroke, so no wedge is left between its square end and a slanted neighbour (middle of M, V, K)"""
+    from shapely.ops import unary_union
+    for k, end in jends:
+        c = out[k][0]; b = c[end]; a = _back(c, end, width)
+        d = math.dist(a, b) or 1; u = ((b[0] - a[0]) / d, (b[1] - a[1]) / d); n = (-u[1], u[0])
+        others = [LineString(o[0]) for i, o in enumerate(out) if i != k and len(o[0]) > 1 and LineString(o[0]).distance(Point(b)) < width]
+        if not others: continue
+        # stop as soon as the side lagging behind is 0.15 mm inside the other stroke (just enough, little overlap)
+        O = unary_union(others); h = 0.5 * width; lim = 0.5 * width - 0.15; t = 0.0
+        while t < OPTS['reach'] * width:
+            q = (b[0] + u[0] * t, b[1] + u[1] * t)
+            if all(O.distance(Point(q[0] + sg * n[0] * h, q[1] + sg * n[1] * h)) <= lim for sg in (1, -1)): break
+            t += 0.05
+        else: q = (b[0] + u[0] * t, b[1] + u[1] * t)   # not reached: go as far as allowed
+        if t > 0 and poly.buffer(0.02).contains(Point(q)): c[end] = q
 
 
 def _split(G, key):
@@ -176,7 +217,7 @@ def _straight(a, b, L, poly):
     return q if poly.buffer(0.02).contains(Point(q)) else b
 
 
-def _split_corners(ls, width):
+def _split_corners(ls, width, mitre=True):
     """split a centre line where it turns a corner: chord directions 1.2 widths before and after
     a point differ by more than 25 deg (local maximum)"""
     L = ls.length; h = 1.2 * width
@@ -190,7 +231,7 @@ def _split_corners(ls, width):
     A = [ang(d) for d in ds]
     cuts = []
     for i in range(len(A)):
-        if A[i] > 25 and A[i] == max(A[max(0, i - 20):i + 21]):
+        if A[i] > max(25, OPTS['mitre_max'] if mitre else 25) and A[i] == max(A[max(0, i - 20):i + 21]):
             if not cuts or ds[i] - cuts[-1] > 2 * h: cuts.append(float(ds[i]))
     # curves (S, U, D, J) turn evenly: only keep sharp turns (angle concentrated, not spread out)
     keep = []
@@ -199,6 +240,7 @@ def _split_corners(ls, width):
         lo = ang(max(h, c - h)) if c - h >= h else 0; hi = ang(min(L - h, c + h)) if c + h <= L - h else 0
         if A[i] > 1.8 * max(lo, hi) and 1.4 * width < c < L - 1.4 * width: keep.append(c)
     if not keep: return [ls]
+    if not mitre: return keep
     out = []; prev = 0.0
     for d_ in keep + [L]:
         if d_ - prev > 0.05: out.append(substring(ls, prev, d_))
@@ -240,19 +282,32 @@ def _edges(poly, p, n, reach=2.5):
 
 
 def column(poly, line, spacing=0.4, inset=0.0, width=None, caps=(False, False)):
-    """satin zigzag along a centre line; spacing = distance between stitches on the same side.
-    Side distances are clamped to 1.25x the column's median, so junctions don't make spikes."""
+    """satin zigzag along a centre line (needle points)"""
+    return zig(column_pairs(poly, line, spacing, width, caps), spacing)
+
+
+def column_pairs(poly, line, spacing=0.4, width=None, caps=(False, False)):
+    """(left, right) edge points along a centre line; spacing = distance between stitches on the same side.
+    The next stitch is placed where the side that moves most (the outside of a curve, the long side of
+    a slanted end) has moved spacing/2 away from the previous stitch, measured square to that stitch;
+    so curves are as dense on the outside as straight parts, and the inside gets short stitches (zig).
+    Side distances are clamped to 1.12x the column's median, so junctions don't make spikes."""
     ls = LineString(line)
     L = ls.length
-    n = max(2, int(round(L / (spacing / 2))) + 1)
-    samples = []
+    n = max(2, int(math.ceil(L / (spacing / 16))) + 1)         # dense samples, picked from below
+    corners = _corners(ls, width or 1)
+    ends = [(dd, _end_edge(poly, ls.interpolate(dd).coords[0], width or 1)) for dd, cp in ((0.0, caps[0]), (L, caps[1])) if cp]
+    ends = [(dd, e_) for dd, e_ in ends if e_ is not None]
+    samples = []; allow = []
     for i in range(n):
         d = L * i / (n - 1)
         p = ls.interpolate(d).coords[0]
         p0 = ls.interpolate(max(0, d - 0.15)).coords[0]; p1 = ls.interpolate(min(L, d + 0.15)).coords[0]
         tx, ty = p1[0] - p0[0], p1[1] - p0[1]; tl = math.hypot(tx, ty) or 1
-        nrm = (-ty / tl, tx / tl)
-        e = _edges(poly, p, nrm)
+        nrm, f = _turn(-ty / tl, tx / tl, d, corners, width, ends)
+        allow.append(f)
+        e = _edges(poly, p, nrm, max(2.5, 1.5 * (width or 1)))
+        if e is not None and LineString(e).distance(Point(p)) > 0.7 * (width or 1): e = None
         if e is None: samples.append((p, nrm, None, None)); continue
         a, b = e
         da = (a[0] - p[0]) * nrm[0] + (a[1] - p[1]) * nrm[1]
@@ -263,19 +318,177 @@ def column(poly, line, spacing=0.4, inset=0.0, width=None, caps=(False, False)):
     if not neg or not pos: return []
     mn, mp = 1.12 * float(np.median(neg)), 1.12 * float(np.median(pos))
     if width: mn, mp = min(mn, 0.62 * width), min(mp, 0.62 * width)
-    pairs = []; last = (-np.median(neg), np.median(pos))
-    for p, nrm, a, b in samples:
-        if a is None: a, b = last
-        a = max(a, -mn); b = min(b, mp)
+    ws_ = [s_[3] - s_[2] for s_ in samples if s_[2] is not None]
+    extra = max(0.0, (OPTS['min_width'] - float(np.median(ws_))) / 2) if ws_ else 0.0
+    dense = []; last = (-np.median(neg), np.median(pos))
+    for (p, nrm, a, b), f in zip(samples, allow):
+        if a is None: a, b = last          # past the outline (through-going end): keep the last full width
+        a = max(a, -mn * f); b = min(b, mp * f)
         if b - a < 0.2: m_ = (a + b) / 2; a, b = m_ - 0.1, m_ + 0.1
-        last = (a, b)
-        pairs.append(((p[0] + nrm[0] * a, p[1] + nrm[1] * a), (p[0] + nrm[0] * b, p[1] + nrm[1] * b)))
-    # end caps: carry both sides along the outline to the corners of the stroke end (square or oblique)
-    if pairs and caps[0]: pairs = _cap(poly, pairs[::-1], spacing, width)[::-1]
-    if pairs and caps[1]: pairs = _cap(poly, pairs, spacing, width)
-    pts = []
-    for k, (l, r) in enumerate(pairs): pts.append(l if k % 2 == 0 else r)
-    return pts
+        if b - a >= 0.8 * (mn + mp) / 1.12: last = (a, b)   # only full-width stitches are carried on
+        if OPTS['pull_pct']: g = (b - a) * OPTS['pull_pct'] / 200; a, b = a - g, b + g
+        a, b = a - OPTS['pull_mm'] - extra, b + OPTS['pull_mm'] + extra
+        dense.append(((p[0] + nrm[0] * a, p[1] + nrm[1] * a), (p[0] + nrm[0] * b, p[1] + nrm[1] * b)))
+    # free ends: the column runs on to the tip and every stitch is cut by the outline, so a square
+    # or slanted end is filled with stitches getting shorter, parallel to the others (no fan)
+    ok = [s_[2] is not None and s_[3] - s_[2] >= 0.25 for s_ in samples]
+    i0, i1 = 0, len(dense)
+    if caps[0]:
+        while i0 < i1 and not ok[i0]: i0 += 1
+    if caps[1]:
+        while i1 > i0 and not ok[i1 - 1]: i1 -= 1
+    dense = dense[i0:i1]
+    if not dense: return []
+    # pick stitches: next one when the side moving most is spacing/2 from the previous stitch
+    step = spacing / 2
+    # stitches that must be there: the one along the bisector of each kept corner (reaches the outer corner)
+    must = set()
+    if corners:
+        ds_ = [L * i / (n - 1) for i in range(n)][i0:i1]
+        for dc, _, _ in corners:
+            must.add(min(range(len(ds_)), key=lambda k: abs(ds_[k] - dc)))
+    pairs = [dense[0]]
+    for qi, q in enumerate(dense[1:], start=1):
+        if qi in must: pairs.append(q); continue
+        l0, r0 = pairs[-1]
+        vx, vy = r0[0] - l0[0], r0[1] - l0[1]; vl = math.hypot(vx, vy)
+        if vl < 0.01: dist = max(math.dist(q[0], l0), math.dist(q[1], r0))
+        else:
+            nx_, ny_ = -vy / vl, vx / vl
+            dist = max(abs((q[0][0] - l0[0]) * nx_ + (q[0][1] - l0[1]) * ny_), abs((q[1][0] - r0[0]) * nx_ + (q[1][1] - r0[1]) * ny_))
+        if dist >= step - spacing / 32: pairs.append(q)     # within half a dense step
+    if dense[-1] is not pairs[-1]:
+        l0, r0 = pairs[-1]
+        if max(math.dist(dense[-1][0], l0), math.dist(dense[-1][1], r0)) > 0.1: pairs.append(dense[-1])
+    if OPTS['push_mm'] > 0:    # shorten free ends
+        k = int(OPTS['push_mm'] / step)
+        if caps[1] and len(pairs) > 2 * k + 4: pairs = pairs[:len(pairs) - k]
+        if caps[0] and len(pairs) > 2 * k + 4: pairs = pairs[k:]
+    return pairs
+
+
+def _corners(ls, width):
+    """corners kept inside one column (turn between 25 deg and mitre_max): distance along the line,
+    direction before and after (unit vectors)"""
+    if OPTS['mitre_max'] <= 25: return []
+    saved = OPTS['mitre_max']; OPTS['mitre_max'] = 25
+    try: ds = _split_corners(ls, width, mitre=False)
+    finally: OPTS['mitre_max'] = saved
+    if isinstance(ds, list) and ds and not isinstance(ds[0], (int, float)): return []
+    out = []; h = 1.2 * width; L = ls.length
+    for d in ds:
+        p0, p1, p2 = (ls.interpolate(v).coords[0] for v in (max(0, d - h), d, min(L, d + h)))
+        u1 = (p1[0] - p0[0], p1[1] - p0[1]); u2 = (p2[0] - p1[0], p2[1] - p1[1])
+        l1, l2 = math.hypot(*u1) or 1, math.hypot(*u2) or 1; u1 = (u1[0] / l1, u1[1] / l1); u2 = (u2[0] / l2, u2[1] / l2)
+        turn = math.degrees(math.acos(max(-1, min(1, u1[0] * u2[0] + u1[1] * u2[1]))))
+        if turn <= OPTS['mitre_max']: out.append((d, u1, u2))
+    return out
+
+
+def _end_edge(poly, tip, width):
+    """direction of the outline edge closing a free stroke end (the longest straight piece of
+    outline near the tip), or None"""
+    ring = list(poly.exterior.coords); best = None
+    for a, b in zip(ring, ring[1:]):
+        seg = LineString([a, b])
+        if seg.distance(Point(tip)) < 0.35 * width and seg.length > 0.3 * width:
+            if best is None or seg.length > best[0]: best = (seg.length, a, b)
+    if best is None: return None
+    _, a, b = best; l_ = math.dist(a, b)
+    return ((b[0] - a[0]) / l_, (b[1] - a[1]) / l_)
+
+
+def _turn(nx_, ny_, d, corners, width, ends=()):
+    """stitch direction near a free end: turns over about one width to lie along the end edge
+    (square ends, slanted ends like K and A feet), so the last stitches close the end exactly"""
+    R_ = 0.9 * (width or 1)
+    for de, ev in ends:
+        if abs(d - de) < R_:
+            t = 1 - abs(d - de) / R_
+            ca = ev[0] * nx_ + ev[1] * ny_
+            if ca < 0: ev = (-ev[0], -ev[1]); ca = -ca
+            if ca < 0.5: break                       # end edge more than 60 deg off: leave square
+            a1 = math.atan2(ny_, nx_); a2 = math.atan2(ev[1], ev[0])
+            da = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
+            a = a1 + da * t
+            n = (math.cos(a), math.sin(a))
+            return n, 1 / max(abs(n[0] * nx_ + n[1] * ny_), 0.5)
+    return _turn_corner(nx_, ny_, d, corners, width)
+
+
+def _turn_corner(nx_, ny_, d, corners, width):
+    """stitch direction: square to the column, except around a kept corner, where it turns from
+    square-before through the corner bisector to square-after over about one column width.
+    Returns (direction, how much longer the stitch may be than a square one)."""
+    R_ = 0.7 * (width or 1)
+    for dc, u1, u2 in corners:
+        if abs(d - dc) < R_:
+            t = (d - (dc - R_)) / (2 * R_)
+            a1 = math.atan2(u1[0], -u1[1]); a2 = math.atan2(u2[0], -u2[1])   # normals (-uy, ux) as angles
+            da = (a2 - a1 + math.pi) % (2 * math.pi) - math.pi
+            a = a1 + da * t
+            n = (math.cos(a), math.sin(a))
+            if n[0] * nx_ + n[1] * ny_ < 0: n = (-n[0], -n[1])
+            c = abs(n[0] * nx_ + n[1] * ny_)
+            return n, 1 / max(c, 0.5)
+    return (nx_, ny_), 1.0
+
+
+def zig(pairs, spacing=0.4, close=(True, True)):
+    """zigzag through the pairs. Where needle points on one side crowd (inside of a curve or a corner),
+    a point closer than short_dist to the last full-length point on that side is moved inwards along
+    its stitch by the next share from short_inset (cycling), so the thread spreads instead of piling up."""
+    pts = [p[k % 2] for k, p in enumerate(pairs)]
+    seq = OPTS['short_inset'] if isinstance(OPTS['short_inset'], (list, tuple)) else (OPTS['short_inset'],)
+    full = [None, None]; idx = [0, 0]
+    for k in range(len(pts)):
+        sd = k % 2
+        if full[sd] is None or math.dist(pts[k], full[sd]) >= OPTS['short_dist']:
+            full[sd] = pts[k]; idx[sd] = 0; continue
+        a, b = pairs[k][sd], pairs[k][1 - sd]
+        f = seq[idx[sd] % len(seq)]; idx[sd] += 1
+        pts[k] = (a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
+    # close the ends that are on the outline (free ends, strokes going through to the outer edge): the
+    # first and last pair are stitched fully, else a corner stays open. Ends inside another stroke stay open.
+    if len(pairs) > 1:
+        if close[0]: pts = [pairs[0][1]] + pts
+        last = pairs[-1][(len(pairs) - 1) % 2 ^ 1]
+        if close[1] and math.dist(last, pts[-1]) > 0.05: pts.append(last)
+    return _split_long(pts)
+
+
+def _split_long(pts):
+    """satin stitches longer than split_len (wide columns) get extra needle points; their place
+    shifts by 1/split_staggers from stitch to stitch, so no ridge forms along the column"""
+    Lm = OPTS['split_len']
+    if not Lm: return pts
+    out = pts[:1]
+    for k in range(1, len(pts)):
+        a, b = pts[k - 1], pts[k]; d = math.dist(a, b)
+        if d > Lm:
+            ph = (k % OPTS['split_staggers']) / OPTS['split_staggers']
+            ts = [(j + ph) * Lm / d for j in range(int(d / Lm) + 1)]
+            ts = [t for t in ts if 0.25 * Lm / d < t < 1 - 0.25 * Lm / d]
+            out += [(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t) for t in ts]
+        out.append(b)
+    return out
+
+
+def rails(pairs, width):
+    """edge runs a little inside the column, for contour underlay"""
+    ins = max(0.2, 0.15 * width)
+    def inset(a, b):
+        d = math.dist(a, b) or 1; t = min(ins, d / 2.5) / d
+        return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+    left = [inset(l, r) for l, r in pairs]; right = [inset(r, l) for l, r in pairs]
+    return left, right
+
+
+def underlay_kind(width):
+    if OPTS.get('underlay'): return OPTS['underlay']
+    if width >= OPTS['german_from']: return 'german'
+    if width >= OPTS['contour_from']: return 'contour'
+    return 'centre'
 
 
 def _corner_walk(ring, p, away_from, maxlen):
@@ -330,7 +543,7 @@ def coverage(cols):
     return unary_union(quads).buffer(0.15) if quads else Polygon()
 
 
-def _plan(poly, br, caps, G, start, spacing, width):
+def _plan(poly, br, caps, G, start, spacing, width, closes=None):
     """order + direction of the columns of one letter with as few cuts as possible.
     Rules: travel runs along the letter's centre line and never over satin already sewn
     (else: cut + jump); a column's satin always comes after its underlay."""
@@ -343,6 +556,7 @@ def _plan(poly, br, caps, G, start, spacing, width):
         k = (round(p[0], 3), round(p[1], 3))
         if k not in near_cache: near_cache[k] = min(nodes, key=lambda q: math.dist(p, q))
         return near_cache[k]
+    kinds = [underlay_kind(float(np.median([math.dist(l, r) for l, r in column_pairs(poly, c, spacing, width)] or [width]))) for c in cols]
     sat_cov = []
     for c in cols:
         sat_cov.append(LineString(c).buffer(0.62 * width, cap_style=2))
@@ -390,8 +604,10 @@ def _plan(poly, br, caps, G, start, spacing, width):
                 if i in new_under:
                     # already underlaid on the way: satin straight on to the far end
                     end = e2; mode = 'fwd'
+                elif kinds[i] == 'contour':
+                    end = e2; mode = 'contour'       # edge run out and back, satin out
                 else:
-                    end = e; mode = 'back'
+                    end = e; mode = 'back'           # (centre walk | contour + zigzag) out, satin back
                 cst = cost + (TRIM if trim else 0) + (0 if trim else plen) * 0.2
                 cands.append((cst, i, rev, path, trim, mode, end, new_under))
         cands.sort(key=lambda x: x[0])
@@ -403,13 +619,25 @@ def _plan(poly, br, caps, G, start, spacing, width):
         c = cols[i][::-1] if rev else cols[i]
         c0, c1 = caps.get(id(cols[i]), (False, False))
         if rev: c0, c1 = c1, c0
+        k0, k1 = (closes or {}).get(id(cols[i]), (True, True))
+        if rev: k0, k1 = k1, k0
         pth = centre_run(list(path.coords), 1.5) if path is not None else []
-        if mode == 'back':
-            und = centre_run(c, 1.5)
-            sat = column(poly, c[::-1], spacing, width=width, caps=(c1, c0))
+        prs = column_pairs(poly, c, spacing, width=width, caps=(c0, c1))
+        if mode == 'fwd':
+            und = []; sat = zig(prs, spacing, (k0, k1))
+        elif mode == 'contour':
+            lft, rgt = rails(prs, width)
+            und = centre_run(lft, 1.5) + centre_run(rgt[::-1], 1.5)[1:]
+            sat = zig(prs, spacing, (k0, k1))
+        elif kinds[i] == 'german':
+            lft, rgt = rails(prs, width)
+            und = centre_run(lft, 1.5) + centre_run(rgt[::-1], 1.5)[1:]
+            idx = list(range(0, len(prs), max(1, int(2.0 / (spacing / 2))))) + [len(prs) - 1]
+            und += [(lft if j % 2 == 0 else rgt)[k] for j, k in enumerate(idx)]   # low zigzag, 2 mm
+            sat = zig(prs[::-1], spacing, (k1, k0))
         else:
-            und = []
-            sat = column(poly, c, spacing, width=width, caps=(c0, c1))
+            und = centre_run(c, 1.5)
+            sat = zig(prs[::-1], spacing, (k1, k0))
         seq.append((pth + und + sat, (0, len(pth) + len(und)), trim and not first))   # travel lies under later satin too
         first = False
     return seq
@@ -421,17 +649,29 @@ def letter(poly, start, spacing=0.4, fill=None):
     br, G = branches(poly, width)
     if G is None: return [(br[0][0], (0, 0), False)]
     caps = {id(b[0]): (b[1], b[2]) for b in br}
-    br = [b[0] for b in br]
+    closes = {id(b[0]): (b[3], b[4]) for b in br if len(b) > 4}
+    brt = br; br = [b[0] for b in br]
     def cols(cur):
-        return _plan(poly, br, caps, G, cur, spacing, width)
+        return _plan(poly, br, caps, G, cur, spacing, width, closes)
     seq = cols(start)
+    # a stroke ending against a slanted neighbour leaves a thin wedge too small for a fill (middle of M):
+    # only those ends run on into the neighbour; wider gaps (apex of A) keep their small fill
+    if fill is not None:
+        cov = coverage([blk[u1:] for blk, (u0, u1), _j in seq])
+        rest = poly.buffer(-0.05).difference(cov)
+        thin = [g for g in getattr(rest, 'geoms', [rest]) if g.geom_type == 'Polygon' and g.area >= 0.02
+                and (g.area < 0.15 or g.buffer(-OPTS['gap_min'] / 2).is_empty)]
+        near = [(k, e) for k, e in G.graph.get('jends', []) if any(g.distance(Point(brt[k][0][e])) < 0.4 * width for g in thin)]
+        if near:
+            _reach(brt, near, poly, width)
+            seq = cols(start)
     # gaps the columns don't reach (apex of A, corners of M): small fill, sewn first (under the satin)
     if fill is not None:
         cov = coverage([blk[u1:] for blk, (u0, u1), _j in seq])
         rest = poly.buffer(-0.05).difference(cov)
         pre = []
         for g in getattr(rest, 'geoms', [rest]):
-            if g.geom_type != 'Polygon' or g.area < 0.15 or g.buffer(-0.15).is_empty: continue
+            if g.geom_type != 'Polygon' or g.area < 0.15 or g.buffer(-OPTS['gap_min'] / 2).is_empty: continue
             pre += fill(g.buffer(0.1).intersection(poly))
         if pre:
             # nearest-neighbour order, travel along the skeleton between the pieces

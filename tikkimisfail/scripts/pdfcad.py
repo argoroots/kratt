@@ -1,3 +1,4 @@
+import math
 import os
 import datetime
 import pyembroidery as pe
@@ -18,6 +19,7 @@ FMT = ('Brother ' + META['format'] + (' + Janome JEF' if META.get('jef') else ''
 COLS = META['colors']
 DATE = datetime.date.fromisoformat(META['date']).strftime('%d.%m.%Y')
 PR = META['params']
+KIND = set(META.get('kinds') or ['run', 'satin', 'tatami'])   # older meta.json: say everything
 num = lambda v: (f'{v:.2f}'.rstrip('0').rstrip('.') if isinstance(v, float) else str(v)).replace('.', ',')
 INK = HexColor('#1a1a1a'); GREY = HexColor('#8a8a8a'); LIGHT = HexColor('#d0d0d0')
 
@@ -41,6 +43,8 @@ def load(f):
                 n=p.count_stitch_commands(pe.STITCH), t=trims)
 D = {f: load(f) for f in FILES}
 fmt = lambda v: f'{v:.1f}'.replace('.', ',')
+PAGES = 1 + 3 * len(FILES)
+FABRIC = os.environ.get('FABRIC', '#f2efe8')   # fabric colour in the look drawing
 
 # ---------------- cover (portrait)
 def cover(c):
@@ -60,8 +64,8 @@ def cover(c):
         t.setStyle(TableStyle(sty)); return t
     rows = [['Leht', 'Fail', 'Mõõdud (L × K)', 'Pisted', 'Lõiked']]
     for i, f in enumerate(FILES):
-        d = D[f]; rows.append([str(i + 2), f, f"{fmt(d['w'])} × {fmt(d['h'])} mm", str(d['n']), str(d['t'])])
-    files_t = tbl(rows, [12 * mm, 62 * mm, 38 * mm, 20 * mm, 18 * mm], right=(3, 4))
+        d = D[f]; rows.append([f'{2 + 3 * i}–{4 + 3 * i}', f, f"{fmt(d['w'])} × {fmt(d['h'])} mm", str(d['n']), str(d['t'])])
+    files_t = tbl(rows, [16 * mm, 58 * mm, 38 * mm, 20 * mm, 18 * mm], right=(3, 4))
     crow = [['Nr', '', 'Originaal', '', 'Brother', '', 'Janome']]
     for i, k in enumerate(COLS, start=1):
         crow.append([str(i), '', f"{k['name']}  {k['hex'].upper()}" if k['name'] != k['hex'] else k['hex'].upper(), '',
@@ -90,10 +94,12 @@ def cover(c):
              Paragraph(f'Nimi masinas: {labels}.', sm),
              Paragraph('Värvid', h2), col_t,
              Paragraph('Kuidas on tehtud', h2),
-             B(f"Laiad kujundid: servaalustikk + ristialustikk (2 mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige."),
-             B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm keskjoone alustikuga; sama kuju tikitakse alati ühtemoodi."),
-             B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste. Tõmbekompensatsioon {num(PR['comp'])} mm. Kinnitus iga elemendi alguses ja lõpus."),
-             B('PES: nullpunkt mustri vasakus ülanurgas. JEF: keskpunktiga. Joonisel on alustikk helesinine (jääb pealispistete alla).'),
+             *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige." + (f" Kangas: {META['fabric']}." if META.get('fabric') else ''))] if 'tatami' in KIND else []),
+             *([B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm, alustikk laiuse järgi (kitsal keskjoon, laiemal servad); sama kuju tikitakse alati ühtemoodi.")] if 'satin' in KIND else []),
+             *([B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste.")] if 'run' in KIND else []),
+             B(f"Tõmbekompensatsioon {num(PR['comp'])} mm piste suunas (tatami read pikemad, satiin laiem). Kinnitus niidilõike ees ja järel."),
+             B(('PES: nullpunkt mustri vasakus ülanurgas.' if META['format'] else '') + (' JEF: keskpunktiga.' if META.get('jef') else '')),
+             B('Iga suuruse kohta 3 joonist: <b>eeldatav välimus</b> (niit 0,4 mm laiune, otsad ümarad), <b>pistete käik</b> (alustikk helesinine; hilisem piste on valge äärisega ja jääb peale) ja <b>niidi tihedus</b> (roheline õhuke … punane liiga paks; kollased ja punased kohad vaata proovil üle).'),
              Paragraph('Kuidas testida', h2),
              B('Masinas: kontrolli suurust ja raami, tee jälgimine (trace).'),
              B('Tiki jäägile: sama kangas, rebitav või lõigatav tugimaterjal, uus tikkimisnõel 75/11.'),
@@ -104,7 +110,7 @@ def cover(c):
     c.setStrokeColor(LIGHT); c.setLineWidth(0.4); c.line(18 * mm, 14 * mm + dh + 2.5 * mm, W - 18 * mm, 14 * mm + dh + 2.5 * mm)
     fr = Frame(18 * mm, 14 * mm + dh + 5 * mm, W - 36 * mm, H - 29 * mm - dh - 5 * mm, showBoundary=0); fr.addFromList(story, c)
     if story: print('WARNING: cover overflow', len(story))
-    c.setFont('Helvetica', 7); c.setFillColor(GREY); c.drawRightString(W - 18 * mm, 9 * mm, f'1 / {len(FILES) + 1}')
+    c.setFont('Helvetica', 7); c.setFillColor(GREY); c.drawRightString(W - 18 * mm, 9 * mm, f'1 / {PAGES}')
 
 # ---------------- CAD sheet (landscape)
 def arrow(c, x, y, ang):
@@ -126,7 +132,73 @@ def dim_v(c, y1, y2, xref, xdim, text):
     c.line(xdim, y1, xdim, y2); arrow(c, xdim, y1, -math.pi / 2); arrow(c, xdim, y2, math.pi / 2)
     c.saveState(); c.translate(xdim - 1.2 * mm, (y1 + y2) / 2); c.rotate(90); c.setFont('Helvetica', 8); c.drawCentredString(0, 0, text); c.restoreState()
 
-def sheet(c, d, page, total):
+KINDS = {'vaade': 'EELDATAV VÄLIMUS', 'pisted': 'PISTETE KÄIK', 'kihid': 'NIIDI TIHEDUS'}   # page order
+
+
+def segs_of(d):
+    """[(q0, q1, colour index, underlay?)] in sewing order, mm"""
+    isU = lambda q: (round(q[0] * 10), round(q[1] * 10)) in d['U']
+    return [(q0, q1, ci, isU(q0) and isU(q1)) for ci, s in d['st'] for q0, q1 in zip(s, s[1:])]
+
+
+def draw_path(c, d, P):
+    """thread path: underlay light and thin; top stitches one by one in sewing order, each with a
+    white edge, so where threads cross the later (upper) one is drawn over the earlier one"""
+    c.setLineCap(1); c.setLineJoin(1)
+    S = segs_of(d)
+    c.setStrokeColor(HexColor('#c3c9e6')); c.setLineWidth(0.08 * mm)
+    for q0, q1, ci, u in S:
+        if u: c.line(*P(*q0), *P(*q1))
+    for q0, q1, ci, u in S:
+        if u: continue
+        c.setStrokeColor(HexColor('#ffffff')); c.setLineWidth(0.30 * mm); c.line(*P(*q0), *P(*q1))
+        c.setStrokeColor(HexColor(COLS[ci]['hex'])); c.setLineWidth(0.12 * mm); c.line(*P(*q0), *P(*q1))
+
+
+def _shade(hx, f):
+    r, g, b = (int(hx[i:i + 2], 16) for i in (1, 3, 5))
+    if f < 1: r, g, b = (int(v * f) for v in (r, g, b))
+    else: r, g, b = (int(v + (255 - v) * (f - 1)) for v in (r, g, b))
+    return HexColor(f'#{r:02x}{g:02x}{b:02x}')
+
+
+def draw_look(c, d, P, X0, Y1, w, h):
+    """thread as it lies on fabric: 0.4 mm wide, rounded where it goes into the fabric,
+    darker edge and a light sheen line; drawn in sewing order (later threads on top)"""
+    c.setFillColor(HexColor(FABRIC)); c.rect(X0 - 3 * mm, Y1 - h - 3 * mm, w + 6 * mm, h + 6 * mm, stroke=0, fill=1)
+    c.setLineCap(1); c.setLineJoin(1)
+    sh = {}
+    for q0, q1, ci, u in segs_of(d):
+        hx = COLS[ci]['hex']
+        if hx not in sh: sh[hx] = (_shade(hx, 0.6), HexColor(hx), _shade(hx, 1.35))
+        dark, mid, light = sh[hx]
+        A, B = P(*q0), P(*q1)
+        c.setStrokeColor(dark); c.setLineWidth(0.44 * mm); c.line(*A, *B)
+        c.setStrokeColor(mid); c.setLineWidth(0.34 * mm); c.line(*A, *B)
+        if math.dist(A, B) > 0.5 * mm:
+            c.setStrokeColor(light); c.setLineWidth(0.09 * mm); c.line(*A, *B)
+
+
+def draw_density(c, d, X0, Y1, ax0, ax1, ay0):
+    """thread length per mm2, smoothed over ~1 mm, 7 levels green -> red"""
+    import preview
+    from reportlab.lib.utils import ImageReader
+    segs = [(q0, q1, '#000000') for q0, q1, ci, u in segs_of(d)]
+    xs = [q[0] for s in segs for q in s[:2]]; ys = [q[1] for s in segs for q in s[:2]]
+    g, gx, gy = preview.density(segs, (min(xs), min(ys), max(xs), max(ys)), 0.25)
+    im = preview.density_image(g, 4)
+    c.drawImage(ImageReader(im), X0 + (gx - d['x0']) * mm, Y1 - (gy - d['y0']) * mm - g.shape[0] * 0.25 * mm,
+                g.shape[1] * 0.25 * mm, g.shape[0] * 0.25 * mm, mask='auto')
+    # legend, bottom right of the drawing area
+    n = len(preview.LEVELS); bw = 13 * mm; lx = ax1 - n * bw - 2 * mm; ly = ay0 + 5 * mm
+    c.setFont('Helvetica', 6.5); c.setFillColor(INK)
+    c.drawString(lx, ly + 5.5 * mm, 'Niidi pikkus mm/mm² (~1 mm ala keskmine): roheline õhuke … punane liiga paks')
+    for i, (hi, col, txt) in enumerate(preview.LEVELS):
+        c.setFillColor(HexColor(col)); c.rect(lx + i * bw, ly, bw, 3.5 * mm, stroke=0, fill=1)
+        c.setFillColor(INK); c.drawCentredString(lx + (i + 0.5) * bw, ly - 3 * mm, txt.split(' – ')[0])
+
+
+def sheet(c, d, page, total, kind):
     W, H = landscape(A4); M = 10 * mm
     # frame
     c.setStrokeColor(INK); c.setLineWidth(0.7); c.rect(M, M, W - 2 * M, H - 2 * M)
@@ -140,7 +212,7 @@ def sheet(c, d, page, total):
     c.setStrokeColor(INK); c.setLineWidth(0.4); c.line(tx, ty0, tx, ty1)
     k0 = COLS[0]
     thread = (k0['name'] + ' ' + k0['hex'].upper()) if len(COLS) == 1 else f'{len(COLS)} värvi (lk 1)'
-    rows = [('PROJEKT', NAME), ('FAIL', d['f']), ('FORMAAT', FMT),
+    rows = [('PROJEKT', NAME), ('JOONIS', KINDS[kind]), ('FAIL', d['f']), ('FORMAAT', FMT),
             ('MÕÕDUD', f"{fmt(d['w'])} × {fmt(d['h'])} mm"), ('PISTED', str(d['n'])), ('NIIDILÕIKED', str(d['t'])),
             ('NIIT', thread), ('BROTHER', f"{k0['brother']['code']} {k0['brother']['name']}" if len(COLS) == 1 else '–'), ('MÕÕTKAVA', '1 : 1'),
             ('KUUPÄEV', DATE), ('LEHT', f'{page} / {total}')]
@@ -148,7 +220,7 @@ def sheet(c, d, page, total):
     for lab, val in reversed(rows):
         if y + rh < ty1 - 0.1: c.setLineWidth(0.25); c.line(tx, y + rh, tx + TBW, y + rh)
         c.setFont('Helvetica', 5.5); c.setFillColor(GREY); c.drawString(tx + 2 * mm, y + rh - 4.0 * mm, lab)
-        c.setFillColor(INK); fn = 'Helvetica-Bold' if lab in ('FAIL', 'LEHT') else 'Helvetica'; fs = 8.5
+        c.setFillColor(INK); fn = 'Helvetica-Bold' if lab in ('FAIL', 'LEHT', 'JOONIS') else 'Helvetica'; fs = 8.5
         lim = TBW - (12 if lab in ('NIIT', 'BROTHER') else 4) * mm
         while c.stringWidth(val, fn, fs) > lim and fs > 5: fs -= 0.25
         c.setFont(fn, fs); c.drawString(tx + 2 * mm, y + rh / 2 - 4.5 * mm, val)
@@ -166,23 +238,10 @@ def sheet(c, d, page, total):
     c.line(max(ax0, X0 - 6 * mm), cy, min(ax1, X0 + w + 6 * mm), cy); c.line(cx, min(ay1 - 1 * mm, Y1 + 6 * mm), cx, max(ay0 + 10 * mm, Y1 - h - 6 * mm)); c.setDash()
     # bounding box (thin dashed)
     c.setStrokeColor(LIGHT); c.setDash([2, 2]); c.rect(X0, Y1 - h, w, h); c.setDash()
-    # stitches
-    # underlay (hidden under the top stitches) light, top stitches in thread colour
     P = lambda a, b: (X0 + (a - d['x0']) * mm, Y1 - (b - d['y0']) * mm)
-    isU = lambda q: (round(q[0] * 10), round(q[1] * 10)) in d['U']
-    c.setLineJoin(1)
-    for layer in (True, False):
-      for ci, k in enumerate(COLS):
-        c.setStrokeColor(HexColor('#c3c9e6') if layer else HexColor(k['hex'])); c.setLineWidth((0.08 if layer else 0.12) * mm)
-        for cc, s in d['st']:
-            if cc != ci: continue
-            p = c.beginPath(); pen = False
-            for q0, q1 in zip(s, s[1:]):
-                if (isU(q0) and isU(q1)) == layer:
-                    if not pen: p.moveTo(*P(*q0)); pen = True
-                    p.lineTo(*P(*q1))
-                else: pen = False
-            c.drawPath(p, stroke=1, fill=0)
+    if kind == 'pisted': draw_path(c, d, P)
+    elif kind == 'vaade': draw_look(c, d, P, X0, Y1, w, h)
+    else: draw_density(c, d, X0, Y1, ax0, ax1, ay0)
     # dimensions
     dim_h(c, X0, X0 + w, Y1 + 1.5 * mm, Y1 + 8 * mm, fmt(d['w']))
     dim_v(c, Y1 - h, Y1, X0 - 1.5 * mm, X0 - 8 * mm, fmt(d['h']))
@@ -196,10 +255,11 @@ def sheet(c, d, page, total):
     for i in range(0, 6): c.drawCentredString(sx + i * 10 * mm, sy - 3 * mm, str(i * 10))
     c.drawString(sx + 52 * mm, sy - 3 * mm, 'mm')
 
-c = canvas.Canvas(os.environ.get('PDF_OUT', f'{NAME} tikkimisfailid.pdf'), pagesize=A4)
+c = canvas.Canvas(os.environ.get('PDF_OUT', f'{NAME} spec.pdf'), pagesize=A4)
 c.setTitle(f'{NAME} – tikkimisfailid')
 cover(c); c.showPage()
 for i, f in enumerate(FILES):
-    c.setPageSize(landscape(A4)); sheet(c, D[f], i + 2, len(FILES) + 1); c.showPage()
+    for j, kind in enumerate(KINDS):
+        c.setPageSize(landscape(A4)); sheet(c, D[f], 2 + 3 * i + j, PAGES, kind); c.showPage()
 c.save()
 for f in FILES: print(f, fmt(D[f]['w']), fmt(D[f]['h']))
