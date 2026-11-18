@@ -68,7 +68,7 @@ def branches(poly, width):
         for s in segs:
             L = sum(math.dist(a, b) for a, b in zip(s, s[1:])) * RES
             ends = [G.degree(s[0]), G.degree(s[-1])]
-            if L < 1.8 * width and min(ends) == 1 and max(ends) > 2:
+            if L < 1.8 * width and min(ends) == 1 and max(ends) > 2 and not (L > 0.9 * width and _continues(s, s[0] if ends[0] > 2 else s[-1], segs, width)):
                 G.remove_nodes_from([n for n in s if G.degree(n) <= 2]); removed = True
         if not removed: break
     key = [n for n in G if G.degree(n) != 2]
@@ -90,7 +90,7 @@ def branches(poly, width):
         if len(pts) < 2: continue
         e0 = ('j', cl[s[0]]) if s[0] in cl else ('e', None) if G.degree(s[0]) == 1 else ('x', None)
         e1 = ('j', cl[s[-1]]) if s[-1] in cl else ('e', None) if G.degree(s[-1]) == 1 else ('x', None)
-        if e0[0] == 'j' and e1[0] == 'j' and e0[1] == e1[1]: continue   # inside one junction
+        if e0[0] == 'j' and e1[0] == 'j' and e0[1] == e1[1] and len(pts) * RES < 2 * width: continue   # inside one junction (a longer one is a loop: bowl of a, b, d)
         ls = LineString(pts).simplify(0.04)
         if ls.length < 0.05: continue
         # split at sharp corners (E, L-type corners): direction change > 50 deg within ~1 width
@@ -162,6 +162,22 @@ def branches(poly, width):
     for a, b, d in G.edges(data=True): H.add_edge(to_mm(a), to_mm(b), weight=d['weight'] * RES)
     H.graph['jends'] = jends
     return out, H
+
+
+def _continues(s, J, segs, width):
+    """a short end branch that carries on straight from another branch at its junction J is the real end
+    of a stroke (stem of d or b just below the bowl), not a corner artefact: keep it"""
+    def d(path):                       # direction away from J, over ~1.5 widths (pixels)
+        if path[0] != J: path = path[::-1]
+        k = min(len(path) - 1, max(1, int(1.5 * width / RES)))
+        dy, dx = path[k][0] - path[0][0], path[k][1] - path[0][1]; L = math.hypot(dx, dy) or 1
+        return dx / L, dy / L
+    a = d(list(s))
+    for t in segs:
+        if t is s or J not in (t[0], t[-1]) or len(t) < 2 or t[0] == t[-1]: continue
+        b = d(list(t))
+        if a[0] * b[0] + a[1] * b[1] < -0.97: return True     # within ~14°: corner spurs (M, A tips) bend away more
+    return False
 
 
 def _reach(out, jends, poly, width):

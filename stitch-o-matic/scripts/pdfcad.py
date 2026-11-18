@@ -25,16 +25,18 @@ INK = HexColor('#1a1a1a'); GREY = HexColor('#8a8a8a'); LIGHT = HexColor('#d0d0d0
 
 def load(f):
     p = pe.read(O + f); st = []; cur = []; trims = 0; last = None; ci = 0
+    BL = META.get('blocks')   # thread block -> colour row, from gen.py (a machine stop repeats a colour)
+    col = lambda i: BL[min(i, len(BL) - 1)] if BL else min(i, len(COLS) - 1)
     for x, y, c in p.stitches:
         c &= pe.COMMAND_MASK
         if c == pe.STITCH: cur.append((x / 10, y / 10))
         else:
-            if len(cur) > 1: st.append((min(ci, len(COLS) - 1), cur))
+            if len(cur) > 1: st.append((col(ci), cur))
             cur = []
         if c == pe.COLOR_CHANGE: ci += 1
         if c == pe.TRIM and last == pe.STITCH: trims += 1
         if c in (pe.STITCH, pe.TRIM): last = c
-    if len(cur) > 1: st.append((min(ci, len(COLS) - 1), cur))
+    if len(cur) > 1: st.append((col(ci), cur))
     xs = [x for _, s in st for x, y in s]; ys = [y for _, s in st for x, y in s]
     import json, os
     uf = 'outpos/' + f[:-4] + '.under.json'
@@ -94,9 +96,13 @@ def cover(c):
              Paragraph(f'Nimi masinas: {labels}.', sm),
              Paragraph('Värvid', h2), col_t,
              Paragraph('Kuidas on tehtud', h2),
-             *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige." + (f" Kangas: {META['fabric']}." if META.get('fabric') else ''))] if 'tatami' in KIND else []),
+             *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige." + (f" Kangas: {FABRIC_ET.get(META['fabric'], META['fabric'])}." if META.get('fabric') else ''))] if 'tatami' in KIND else []),
              *([B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm, alustikk laiuse järgi (kitsal keskjoon, laiemal servad); sama kuju tikitakse alati ühtemoodi.")] if 'satin' in KIND else []),
              *([B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste.")] if 'run' in KIND else []),
+             *([B(f"Ääris: täidise serval satiinriba {num(PR.get('fill_border', 0) or PR.get('applique_border', 3))} mm, nurgad pöördega; varjab täidise serva ja tõmbe.")] if 'border' in KIND else []),
+             *([B(f"Kontuuritäide: read käivad kujundi servaga paralleelselt, reavahe {num(PR['fill_spacing'])} mm, üks pidev spiraal (ilma õmbluseta).")] if 'contour' in KIND else []),
+             *([B(f"Ristpiste: ruut {num(PR.get('cross_size', 2.0))} mm, ruudustik ühine kogu tikandil; rist = kaks diagonaali.")] if 'cross' in KIND else []),
+             *([B("Aplikatsioon: masin peatub 2 korda – (1) pärast paigutusjoont: aseta kangatükk joone peale; (2) pärast kinnitusjoont: lõika kangas joone lähedalt ära, siis ääris. Peatus näeb välja nagu värvivahetus sama niidiga.")] if 'applique' in KIND else []),
              B(f"Tõmbekompensatsioon {num(PR['comp'])} mm piste suunas (tatami read pikemad, satiin laiem). Kinnitus niidilõike ees ja järel."),
              B(('PES: nullpunkt mustri vasakus ülanurgas.' if META['format'] else '') + (' JEF: keskpunktiga.' if META.get('jef') else '')),
              B('Iga suuruse kohta 3 joonist: <b>eeldatav välimus</b> (niit 0,4 mm laiune, otsad ümarad), <b>pistete käik</b> (alustikk helesinine; hilisem piste on valge äärisega ja jääb peale) ja <b>niidi tihedus</b> (roheline õhuke … punane liiga paks; kollased ja punased kohad vaata proovil üle).'),
@@ -108,7 +114,12 @@ def cover(c):
     disc = Paragraph('<b>Märkus.</b> Joonised on mõõtkavas 1 : 1: prindi 100 % (mitte „Fit to page“), mõõtjoonlaud = 50 mm. Mõõdud on pistete äärmiste punktide järgi, telgjooned = raami kese. Tee enne kasutamist proovitikkimine.', ParagraphStyle('d', parent=sm, textColor=GREY))
     dw, dh = disc.wrap(W - 36 * mm, 40 * mm); disc.drawOn(c, 18 * mm, 14 * mm)
     c.setStrokeColor(LIGHT); c.setLineWidth(0.4); c.line(18 * mm, 14 * mm + dh + 2.5 * mm, W - 18 * mm, 14 * mm + dh + 2.5 * mm)
-    fr = Frame(18 * mm, 14 * mm + dh + 5 * mm, W - 36 * mm, H - 29 * mm - dh - 5 * mm, showBoundary=0); fr.addFromList(story, c)
+    FW, FH = W - 36 * mm, H - 29 * mm - dh - 5 * mm
+    for gap in (28, 20, 14, 9):                          # more techniques = more text: tighten headings until it fits
+        h2.spaceBefore = gap
+        need = sum(f.wrap(FW - 12, FH)[1] + f.getSpaceBefore() + f.getSpaceAfter() for f in story)
+        if need < FH - 18: break
+    fr = Frame(18 * mm, 14 * mm + dh + 5 * mm, FW, FH, showBoundary=0); fr.addFromList(story, c)
     if story: print('WARNING: cover overflow', len(story))
     c.setFont('Helvetica', 7); c.setFillColor(GREY); c.drawRightString(W - 18 * mm, 9 * mm, f'1 / {PAGES}')
 
@@ -132,7 +143,11 @@ def dim_v(c, y1, y2, xref, xdim, text):
     c.line(xdim, y1, xdim, y2); arrow(c, xdim, y1, -math.pi / 2); arrow(c, xdim, y2, math.pi / 2)
     c.saveState(); c.translate(xdim - 1.2 * mm, (y1 + y2) / 2); c.rotate(90); c.setFont('Helvetica', 8); c.drawCentredString(0, 0, text); c.restoreState()
 
-KINDS = {'vaade': 'EELDATAV VÄLIMUS', 'pisted': 'PISTETE KÄIK', 'kihid': 'NIIDI TIHEDUS'}   # page order
+# PDF text is Estonian: density legend and fabric names as the reader sees them
+LEVEL_LABELS_ET = ['alla 2', '2–4', '4–5,5', '5,5–7', '7–8,5', '8,5–10', 'üle 10']
+FABRIC_ET = {'linen': 'linane', 'cotton': 'puuvill', 'denim': 'teksas', 'canvas': 'kanvas', 'jersey': 'trikoo',
+             'fleece': 'fliis', 'terry': 'frotee', 'leather': 'nahk', 'vinyl': 'vinüül'}
+KINDS = {'appearance': 'EELDATAV VÄLIMUS', 'stitches': 'PISTETE KÄIK', 'density': 'NIIDI TIHEDUS'}   # page order
 
 
 def segs_of(d):
@@ -195,7 +210,7 @@ def draw_density(c, d, X0, Y1, ax0, ax1, ay0):
     c.drawString(lx, ly + 5.5 * mm, 'Niidi pikkus mm/mm² (~1 mm ala keskmine): roheline õhuke … punane liiga paks')
     for i, (hi, col, txt) in enumerate(preview.LEVELS):
         c.setFillColor(HexColor(col)); c.rect(lx + i * bw, ly, bw, 3.5 * mm, stroke=0, fill=1)
-        c.setFillColor(INK); c.drawCentredString(lx + (i + 0.5) * bw, ly - 3 * mm, txt.split(' – ')[0])
+        c.setFillColor(INK); c.drawCentredString(lx + (i + 0.5) * bw, ly - 3 * mm, LEVEL_LABELS_ET[i])
 
 
 def sheet(c, d, page, total, kind):
@@ -239,8 +254,8 @@ def sheet(c, d, page, total, kind):
     # bounding box (thin dashed)
     c.setStrokeColor(LIGHT); c.setDash([2, 2]); c.rect(X0, Y1 - h, w, h); c.setDash()
     P = lambda a, b: (X0 + (a - d['x0']) * mm, Y1 - (b - d['y0']) * mm)
-    if kind == 'pisted': draw_path(c, d, P)
-    elif kind == 'vaade': draw_look(c, d, P, X0, Y1, w, h)
+    if kind == 'stitches': draw_path(c, d, P)
+    elif kind == 'appearance': draw_look(c, d, P, X0, Y1, w, h)
     else: draw_density(c, d, X0, Y1, ax0, ax1, ay0)
     # dimensions
     dim_h(c, X0, X0 + w, Y1 + 1.5 * mm, Y1 + 8 * mm, fmt(d['w']))
@@ -255,7 +270,7 @@ def sheet(c, d, page, total, kind):
     for i in range(0, 6): c.drawCentredString(sx + i * 10 * mm, sy - 3 * mm, str(i * 10))
     c.drawString(sx + 52 * mm, sy - 3 * mm, 'mm')
 
-c = canvas.Canvas(os.environ.get('PDF_OUT', f'{NAME} spec.pdf'), pagesize=A4)
+c = canvas.Canvas(os.environ.get('PDF_OUT', f'{NAME} - Projekt.pdf'), pagesize=A4)
 c.setTitle(f'{NAME} – tikkimisfailid')
 cover(c); c.showPage()
 for i, f in enumerate(FILES):

@@ -179,6 +179,9 @@ DEFAULTS = dict(
     fill_spacing=0.3,   # tatami row step, mm (multiple of 0.1)
     fill_maxlen=4.0,    # longest tatami stitch, mm
     fill_under_spacing=0.9,  # tatami cross underlay row step, mm (about 3x fill_spacing)
+    fill_border=0.0,    # satin border round tatami / contour fills, mm wide (0 = none); hides the fill's edge
+    applique_border=3.0,  # appliqué: width of the satin covering the cut fabric edge, mm
+    cross_size=2.0,     # cross stitch: cell size, mm (grid starts at the design's top left corner)
     satin_spacing=0.4,  # satin: distance between stitches on the same side, mm
     satin_max=2.8,      # wider shapes (2*area/perimeter, mm) get tatami instead of satin
     run_passes=3,       # thin strokes: running stitch passes
@@ -202,17 +205,51 @@ DEFAULTS = dict(
 
 PLAN_KEYS = set(DEFAULTS) | {'stitch', 'underlay'}
 
-# starting points per fabric (TEADMISED.md, section 8); everything else stays at DEFAULTS
+
+def suggest(g, c=None):
+    """measured hints for the plan (shape g in mm at the largest size): what the rules pick and which
+    other technique is worth offering, with the reason. Hints only: the person decides (KNOWLEDGE 10)."""
+    c = c or DEFAULTS
+    if g.is_empty or g.area <= 0: return 'run', []
+    w = 2 * g.area / g.length
+    rule = 'satin' if w <= c['satin_max'] else 'tatami'
+    out = []
+    if rule == 'tatami':
+        parts = list(g.geoms) if hasattr(g, 'geoms') else [g]
+        circ = max(4 * math.pi * q.area / q.length ** 2 for q in parts)
+        segs = []
+        for q in parts:
+            r = list(q.simplify(0.05).exterior.coords)
+            segs += [(r[i], r[i + 1]) for i in range(len(r) - 1)]
+        def turn(i):
+            (a0, a1), (b0, b1) = segs[i - 1], segs[i]
+            u = math.atan2(a1[1] - a0[1], a1[0] - a0[0]); v = math.atan2(b1[1] - b0[1], b1[0] - b0[0])
+            return abs((math.degrees(v - u) + 180) % 360 - 180)
+        sharp = sum(1 for i in range(len(segs)) if turn(i) > 40)
+        axis = all(min(abs(a[0] - b[0]), abs(a[1] - b[1])) < 0.05 for a, b in segs)
+        grid = axis and len(segs) >= 8
+        if grid:
+            out.append(('cross', 'only horizontal and vertical edges, stepped like a grid: cross stitch, if it is a folk or grid pattern'))
+        elif circ >= 0.8 and sharp == 0:
+            out.append(('contour', f'round (roundness {circ:.2f}, no sharp corners): contour fill looks domed and pulls evenly'))
+        if g.area >= 1500:
+            out.append(('applique', f'large area ({g.area / 100:.0f} cm²): appliqué is softer, faster and fewer stitches (~{g.area * 6 / 1000:.0f}k as tatami)'))
+        if w >= 6 and not grid:
+            out.append(('fill_border', 'wide fill: a satin border (2–3 mm) makes the edge sharp, if the edge matters in the design'))
+    return rule, out
+FILL_STITCHES = ('satin', 'tatami', 'contour', 'applique', 'cross')   # plan "stitch" values for shapes
+
+# starting points per fabric (KNOWLEDGE.md, section 8); everything else stays at DEFAULTS
 FABRICS = {
-    'linane':  dict(),
-    'puuvill': dict(),
-    'teksas':  dict(fill_spacing=0.4, comp=0.15),
-    'kanvas':  dict(fill_spacing=0.4, comp=0.15),
-    'trikoo':  dict(fill_spacing=0.4, satin_spacing=0.45, comp=0.30, fill_under_spacing=0.75, satin_min=1.2),
-    'fliis':   dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
-    'frotee':  dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
-    'nahk':    dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
-    'vinüül':  dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
+    'linen':   dict(),
+    'cotton':  dict(),
+    'denim':   dict(fill_spacing=0.4, comp=0.15),
+    'canvas':  dict(fill_spacing=0.4, comp=0.15),
+    'jersey':  dict(fill_spacing=0.4, satin_spacing=0.45, comp=0.30, fill_under_spacing=0.75, satin_min=1.2),
+    'fleece':  dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
+    'terry':   dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
+    'leather': dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
+    'vinyl':   dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
 }
 
 
@@ -251,13 +288,14 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
         if e['kind'] == 'fill':   # satin or tatami, decided at the reference size
             ws = [2 * p.area / p.length for p in polys(affinity.scale(e['geom'], sr / s, sr / s, origin=(0, 0)).buffer(c['comp'], join_style=2))]
             e['stitch'] = 'satin' if ws and max(ws) <= c['satin_max'] else 'tatami'
-            if e['cfg'].get('stitch') in ('satin', 'tatami'): e['stitch'] = e['cfg']['stitch']
+            if e['cfg'].get('stitch') in FILL_STITCHES: e['stitch'] = e['cfg']['stitch']
         if e['cfg'].get('stitch') == 'run' and e['kind'] == 'run': e['stitch'] = 'run'
         els.append(e)
     els = knockout(els, c['overlap'])
+    GRID0 = (x0 * s, y0 * s)                        # cross stitch grid origin: design's top left corner
 
     pat = pe.EmbPattern()
-    KINDS = set()
+    KINDS = set(); CUR = [None]; STOPS = []
     cur = [None]; prevpt = [None]; UL = []
 
     def stitch_block(pts, connect=False, under=None, force_trim=False):
@@ -306,6 +344,10 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     def tatami(p, c=c):
         global OVERLAP
         OVERLAP = True
+        full = p
+        if c['fill_border'] > 0:                                 # fill goes 0.3 mm under the border
+            p = p.buffer(-(c['fill_border'] - 0.3), join_style=2)
+            if p.is_empty: p = full
         for q in polys(p.buffer(-0.35)):                         # edge underlay
             rr = run(list(q.exterior.coords), 1, 2.0); stitch_block(rr, under=(0, len(rr)))
         for q in (polys(p.buffer(-0.4)) if c['fill_under_spacing'] > 0 else []):   # cross underlay
@@ -320,6 +362,138 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
             if k > 0 and math.dist(cur[0], blk[0]) > 0.6: tie_off(); stitch_block(blk)   # each part from its top
             else: stitch_block(blk, connect=k > 0)
         tie_off()
+        if c['fill_border'] > 0: border(full, c)
+
+    def border(p, c=c, w=None):
+        """satin border along every outline ring: outer edge = outline + comp, inner edge w inside"""
+        w = w or c['fill_border']; KINDS.add('border')
+        set_satin(c); saved = SAT.OPTS['mitre_max']; SAT.OPTS['mitre_max'] = 135.0   # a ring turns every corner
+        try:
+            for q in polys(p):
+                for k, ring in enumerate([q.exterior] + list(q.interiors)):
+                    rp = Polygon(ring)
+                    # round join: at an inward corner (heart notch) the centre line arcs round the corner
+                    # instead of a mitre spike; outward corners (rectangle) stay sharp either way
+                    mid = rp.buffer(-w / 2, join_style=1) if k == 0 else rp.buffer(w / 2, join_style=1)
+                    for m in polys(mid):
+                        line = start_on_side(list(m.exterior.coords), cur[0], 3 * w)
+                        band = LineString(line).buffer(w / 2 + 0.01, cap_style=2, join_style=2)
+                        prs = SAT.column_pairs(band, line, c['satin_spacing'], width=w, caps=(False, False))
+                        if not prs: continue
+                        und = run(line, 1, 2.0)
+                        stitch_block(und + SAT.zig(prs, c['satin_spacing']), under=(0, len(und)))
+                        tie_off()
+        finally:
+            SAT.OPTS['mitre_max'] = saved
+
+    def contour(p, c=c):
+        """contour fill: rows follow the outline inwards (rounded shapes look domed, pull is even).
+        While the shape stays one piece without holes the rows form one spiral (no seam of hops);
+        otherwise each ring is sewn on its own, starting next to where the last one ended."""
+        sp = c['fill_spacing']
+        for q in polys(p.buffer(-0.35)):                           # edge underlay
+            rr = run(list(q.exterior.coords), 1, 2.0); stitch_block(rr, under=(0, len(rr)))
+        levels = []; k = 0
+        while k < 2000:
+            off = sp / 2 + k * sp - c['comp']
+            inner = p.buffer(-off, join_style=1) if off > 0 else p.buffer(-off, join_style=2)
+            if inner.is_empty: break
+            levels.append(polys(inner)); k += 1
+        first = True; i = 0
+        while i < len(levels):
+            simple = lambda L: len(L) == 1 and not list(L[0].interiors)
+            if simple(levels[i]):
+                j = i
+                while j + 1 < len(levels) and simple(levels[j + 1]): j += 1
+                pts = spiral([levels[t][0].exterior for t in range(i, j + 1)], cur[0], c['fill_maxlen'])
+                stitch_block(pts, connect=not first and cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
+                first = False; i = j + 1; continue
+            rings = [r for q in levels[i] for r in [q.exterior] + list(q.interiors) if r.length > 0.6]
+            rings.sort(key=lambda r: r.distance(Point(cur[0])) if cur[0] else 0)
+            for r in rings:
+                line = start_on_side(list(r.coords), cur[0], 0)
+                pts = run(line, 1, c['fill_maxlen'])
+                stitch_block(pts, connect=not first and cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
+                first = False
+            i += 1
+        tie_off()
+        if c['fill_border'] > 0: border(p, c)
+
+    def spiral(rings, near, step):
+        """one continuous path from the outer ring inwards: along ring k the path drifts to ring k+1"""
+        out = []
+        start = Point(near) if near else Point(rings[0].coords[0])
+        for k, r in enumerate(rings):
+            nxt = rings[k + 1] if k + 1 < len(rings) else None
+            L = r.length; s0 = r.project(start)
+            n = max(8, int(L / 0.5))
+            if nxt is not None:
+                t0 = nxt.project(Point(r.interpolate(s0).coords[0])); Ln = nxt.length
+            for m in range(n):
+                f = m / n
+                a_ = r.interpolate((s0 + f * L) % L).coords[0]
+                if nxt is not None:
+                    b_ = nxt.interpolate((t0 + f * Ln) % Ln).coords[0]
+                    out.append((a_[0] + (b_[0] - a_[0]) * f, a_[1] + (b_[1] - a_[1]) * f))
+                else: out.append(a_)
+            if nxt is not None: start = Point(nxt.interpolate(t0).coords[0])
+            else: out.append(r.interpolate(s0).coords[0])
+        return even_run(out, step, c['run_tol'])
+
+    def start_on_side(line, near, minlen):
+        """rotate a closed ring to start in the middle of a straight side (not on a corner),
+        the side nearest to `near`; sides shorter than minlen are skipped when possible"""
+        segs = [(k, math.dist(line[k], line[k + 1])) for k in range(len(line) - 1)]
+        long_ = [k for k, L in segs if L >= minlen] or [max(segs, key=lambda t: t[1])[0]]
+        k = min(long_, key=lambda k: math.dist(near, ((line[k][0] + line[k + 1][0]) / 2, (line[k][1] + line[k + 1][1]) / 2))) if near else long_[0]
+        mid = ((line[k][0] + line[k + 1][0]) / 2, (line[k][1] + line[k + 1][1]) / 2)
+        return [mid] + line[k + 1:-1] + line[:k + 1] + [mid]
+
+    def stop(label):
+        """machine stop (a colour change to the same thread) with a note for the person at the machine"""
+        tie_off(); pat.add_command(pe.TRIM); pat.add_command(pe.COLOR_CHANGE); cur[0] = None
+        pat.add_thread({'color': int(CUR[0][1:], 16), 'name': label})
+        STOPS.append(label)
+
+    def applique(p, c=c):
+        """appliqué: placement line, stop (lay the fabric), tack-down, stop (cut the fabric), satin cover"""
+        for q in polys(p):
+            for ring in [q.exterior] + list(q.interiors):
+                stitch_block(run(list(ring.coords), 1, 2.0)); tie_off()
+        stop('Aplikatsioon: aseta kangas')   # label shown to the person at the machine (Estonian, like the PDF)
+        for q in polys(p.buffer(-0.5, join_style=2)):
+            for ring in [q.exterior] + list(q.interiors):
+                stitch_block(run(list(ring.coords), 1, 1.5)); tie_off()
+        stop('Aplikatsioon: lõika kangas')
+        border(p, c, c['applique_border'])
+
+    def cross(p, c=c):
+        """cross stitch on a grid: '/' under '\\', travel only along the diagonals (hidden)"""
+        a = c['cross_size']; ox, oy = GRID0
+        x0_, y0_, x1_, y1_ = p.bounds
+        cells = []
+        for j in range(int((y0_ - oy) // a), int((y1_ - oy) // a) + 1):
+            row = []
+            for i in range(int((x0_ - ox) // a), int((x1_ - ox) // a) + 1):
+                cx, cy = ox + i * a, oy + j * a
+                b = Polygon([(cx, cy), (cx + a, cy), (cx + a, cy + a), (cx, cy + a)])
+                if p.intersection(b).area >= 0.5 * a * a: row.append((i, j))
+            cells.append(row if (j % 2 == 0) else row[::-1])            # rows back and forth
+        corner = lambda i, j, u, v: (ox + (i + u) * a, oy + (j + v) * a)
+        blk = []; prev = None
+        for (i, j) in [cell for row in cells for cell in row]:
+            C = corner(i, j, 0.5, 0.5)
+            if prev is not None and abs(prev[0] - i) <= 1 and abs(prev[1] - j) <= 1 and prev != (i, j):
+                # go from the previous centre over a shared corner into this centre (both on diagonals)
+                pi, pj = prev
+                shared = [corner(pi, pj, u, v) for u in (0, 1) for v in (0, 1)
+                          if abs(pi + u - i - 0.5) <= 0.5 + 1e-9 and abs(pj + v - j - 0.5) <= 0.5 + 1e-9]
+                blk.append(shared[0])
+            elif blk:
+                stitch_block(blk); tie_off(); blk = []
+            blk += [C, corner(i, j, 0, 1), corner(i, j, 1, 0), C, corner(i, j, 0, 0), corner(i, j, 1, 1), C]
+            prev = (i, j)
+        if blk: stitch_block(blk); tie_off()
 
     cache = []   # identical shapes get identical stitches
 
@@ -352,7 +526,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     for ci, col in enumerate(colors):
         if ci > 0:
             pat.add_command(pe.TRIM); pat.add_command(pe.COLOR_CHANGE); cur[0] = None
-        pat.add_thread({'color': int(col[1:], 16), 'name': threads.get(col, col)})
+        pat.add_thread({'color': int(col[1:], 16), 'name': threads.get(col, col)}); CUR[0] = col
         items = []
         for e in els:
             if e['color'] != col: continue
@@ -387,6 +561,9 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
             if kind == 'run':
                 stitch_block(run(list(g.coords), ce['run_passes'], ce['run_step'])); tie_off()
             elif kind == 'tatami': tatami(g, ce)
+            elif kind == 'contour': contour(g, ce)
+            elif kind == 'applique': applique(g, ce)
+            elif kind == 'cross': cross(g, ce)
             else: satin(g, ce)
 
     # clean: drop duplicates / stitches < 0.15 mm, keep the last stitch before any command
@@ -409,6 +586,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     tx, ty = -round((x0 + x1) / 2), -round((y0 + y1) / 2)
     pat.translate(tx, ty)
     pat.scale_mm, pat.offset = s, (tx, ty)
-    pat.kinds = sorted(KINDS)                        # stitch types used: run, satin, tatami          # shape in pattern units = SVG * scale_mm * 10 + offset
+    pat.kinds = sorted(KINDS)                        # stitch types used: run, satin, tatami, contour, applique, cross, border
+    pat.stops = STOPS                                # machine stops inside a colour (appliqué), in order          # shape in pattern units = SVG * scale_mm * 10 + offset
     pat.underlay = [(round(x * 10 + tx), round(y * 10 + ty)) for x, y in UL]
     return pat

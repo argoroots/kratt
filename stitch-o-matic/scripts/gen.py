@@ -1,9 +1,9 @@
 """Make embroidery files from an SVG.
 
-python3 gen.py logo.svg --name "Nimi" --sizes 100,150,200 --machines brother,janome [--working toimiv.pes]
-       [--color "#rrggbb=Niidi nimi"] [--angle 45] [--background "#ffffff"] [--set satin_max=2.5] [--plan plan.json]
+python3 gen.py logo.svg --name "Name" --sizes 100,150,200 --machines brother,janome [--working working.pes]
+       [--color "#rrggbb=Thread name"] [--angle 45] [--background "#ffffff"] [--set satin_max=2.5] [--plan plan.json]
 
-Writes out/<Nimi> <size>.pes (+ .jef, .bmp), outpos/ (PES v6, underlay points), out/meta.json.
+Writes out/<Name> <size>.pes (+ .jef, .bmp), outpos/ (PES v6, underlay points), out/meta.json.
 <size> = longer side in mm, 3 places padded with spaces.
 """
 import argparse, json, math, os, datetime
@@ -49,7 +49,7 @@ def main():
     ap.add_argument('--color', action='append', default=[], help='"#rrggbb=thread name"')
     ap.add_argument('--angle', type=float, default=digitize.DEFAULTS['fill_angle'])
     ap.add_argument('--background', default='#ffffff')
-    ap.add_argument('--fabric', help='kangas: ' + ', '.join(digitize.FABRICS))
+    ap.add_argument('--fabric', help='fabric: ' + ', '.join(digitize.FABRICS))
     ap.add_argument('--plan', help='plan.json: decisions per shape (see digitize.build)')
     ap.add_argument('--set', action='append', default=[], help='parameter=value (see digitize.DEFAULTS)')
     ap.add_argument('--machines', required=True, help='brother, janome or both: brother,janome')
@@ -78,7 +78,7 @@ def main():
         for m in mach:
             _, mname, (HW, HH) = MACHINES[m]
             if not ((w <= HW and h <= HH) or (w <= HH and h <= HW)):
-                print(f'HOIATUS: {fn} ({w:.0f} x {h:.0f} mm) ei mahu {mname} raami {HW} x {HH} mm')
+                print(f'WARNING: {fn} ({w:.0f} x {h:.0f} mm) does not fit the {mname} hoop {HW} x {HH} mm')
         if 'jef' in fmts:                                    # Janome: centred
             pe.write_jef(p, f'out/{fn}.jef', {'trims': True}); bmp(p, f'out/{fn}.bmp')
         dx, dy = -math.floor(min(x for x, y in st) + 0.5), -math.floor(min(y for x, y in st) + 0.5)   # min rounds to 0
@@ -94,6 +94,10 @@ def main():
         else:
             import shutil; shutil.copy(f'outpos/{fn}.pes', f'out/{fn}.pes')
         meta['kinds'] = sorted(set(meta.get('kinds', [])) | set(getattr(p, 'kinds', [])))
+        hx = [k['hex'].lower() for k in meta['colors']]        # thread block -> colour row (a machine stop repeats a colour)
+        meta['blocks'] = [hx.index(t.hex_color().lower()) if t.hex_color().lower() in hx else min(i, len(hx) - 1)
+                          for i, t in enumerate(p.threadlist)]
+        meta['stops'] = list(getattr(p, 'stops', []))
         meta['files'].append(dict(file=fn, w=round(w, 1), h=round(h, 1), label=label))
         print(fn, f'{w:.1f} x {h:.1f} mm', len(st), 'stitches')
     json.dump(meta, open('out/meta.json', 'w'), ensure_ascii=False, indent=1)

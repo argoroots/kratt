@@ -4,13 +4,14 @@ python3 swatch.py logo.svg --name Proov --size 60 --vary satin_spacing=0.35,0.4,
        [--working toimiv.pes] [--angle 45] [--background "#ffffff"] [--set fill_spacing=0.3] [--gap 8]
        [--only 0,2,5] [--list]
 
---list   prints the shapes of the SVG with numbers and positions (mm at --size), then stops.
+--list   prints the shapes of the SVG with numbers and positions (mm at --size), the stitch type the rules
+         pick and other techniques worth offering (with the measured reason), then stops. Needs only --size.
 --only   uses only these shapes, in one row, at the scale they have when the whole design is
          --size mm (e.g. only the difficult letters of a 150 mm logo).
 
 Each variant gets a number stitched under it (running stitch, first colour).
 Writes out/<Nimi>.pes / .jef (one file, all variants), out/<Nimi>.txt (number -> value)
-and out/<Nimi>.niit.png (thread preview with the numbers).
+and out/<Nimi>.thread.png (thread preview with the numbers).
 """
 import argparse, json, math, os
 import pyembroidery as pe
@@ -72,24 +73,25 @@ def blocks(p):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('svg'); ap.add_argument('--name', required=True)
+    ap.add_argument('svg'); ap.add_argument('--name')
     ap.add_argument('--size', type=float, required=True, help='longer side of one variant, mm')
-    ap.add_argument('--vary', required=True, help='parameter=v1,v2,... (see digitize.DEFAULTS)')
-    ap.add_argument('--machines', required=True)
+    ap.add_argument('--vary', help='parameter=v1,v2,... (see digitize.DEFAULTS)')
+    ap.add_argument('--machines')
     ap.add_argument('--working'); ap.add_argument('--angle', type=float, default=digitize.DEFAULTS['fill_angle'])
     ap.add_argument('--background', default='#ffffff')
-    ap.add_argument('--fabric', help='kangas: ' + ', '.join(digitize.FABRICS))
+    ap.add_argument('--fabric', help='fabric: ' + ', '.join(digitize.FABRICS))
     ap.add_argument('--plan', help='plan.json: decisions per shape (see digitize.build)')
     ap.add_argument('--set', action='append', default=[])
     ap.add_argument('--gap', type=float, default=8.0, help='space between variants, mm')
     ap.add_argument('--only', help='shape numbers from --list, e.g. 0,2,5')
     ap.add_argument('--list', action='store_true')
     a = ap.parse_args()
-    key, vals = a.vary.split('=', 1)
+    if not a.list and not (a.name and a.vary and a.machines): ap.error('--name, --vary and --machines are required (except with --list)')
+    key, vals = (a.vary or 'comp=0').split('=', 1)
     if key == 'angle': key = 'fill_angle'
-    if key not in digitize.DEFAULTS: raise SystemExit(f'tundmatu parameeter {key}; vali: {", ".join(digitize.DEFAULTS)}')
+    if key not in digitize.DEFAULTS: raise SystemExit(f'unknown parameter {key}; choose from: {", ".join(digitize.DEFAULTS)}')
     vals = [float(v) for v in vals.split(',')]
-    mach = [m.strip().lower() for m in a.machines.split(',') if m.strip()]
+    mach = [m.strip().lower() for m in (a.machines or '').split(',') if m.strip()]
     cfg = dict(digitize.FABRICS[a.fabric]) if a.fabric else {}
     cfg['fill_angle'] = a.angle
     for kv in a.set:
@@ -105,6 +107,9 @@ def main():
             for i, e in enumerate(els):
                 b = e['geom'].bounds
                 print(f'{i:3}  {e["kind"]:4} {e["color"]}  x {(b[0] - x0) * k:6.1f}–{(b[2] - x0) * k:6.1f}  y {(b[1] - y0) * k:6.1f}–{(b[3] - y0) * k:6.1f} mm')
+                if e['kind'] == 'fill':           # what the rules pick, and what else to offer (KNOWLEDGE 10)
+                    rule, hints = digitize.suggest(affinity.scale(e['geom'], k, k, origin=(0, 0)), dict(digitize.DEFAULTS, **cfg))
+                    print(f'       rule: {rule}' + ''.join(f'\n       suggest: {t} – {why}' for t, why in hints))
             return
         pick = [els[int(i)] for i in a.only.split(',')]
         cur = None; out_ = []; base = pick[0]['geom'].bounds[3]
@@ -136,7 +141,7 @@ def main():
         sc = (not ok, max(W, H))
         if best is None or sc < best[0]: best = (sc, cols, W, H)
     (bad, _), cols, W, H = best
-    if bad: print(f'HOIATUS: {n} varianti ({W:.0f} x {H:.0f} mm) ei mahu raami; vähenda --size või väärtuste arvu')
+    if bad: print(f'WARNING: {n} variants ({W:.0f} x {H:.0f} mm) do not fit the hoop; reduce --size or the number of values')
     # assemble: colour by colour, every variant, numbers with the first colour
     ncol = len(blocks(pats[0]))
     out = pe.EmbPattern()
@@ -188,8 +193,8 @@ def main():
         for k, v in enumerate(vals): f.write(f'{k + 1}: {key} = {v:g}\n')
     import preview
     segs = preview.segments(out)
-    preview.thread_picture(segs, (0, 0, w, h), 8, '#f2efe8').save(f'out/{a.name}.niit.png')
-    print(f'{a.name}: {n} varianti, {w:.0f} x {h:.0f} mm, {len(st)} pistet')
+    preview.thread_picture(segs, (0, 0, w, h), 8, '#f2efe8').save(f'out/{a.name}.thread.png')
+    print(f'{a.name}: {n} variants, {w:.0f} x {h:.0f} mm, {len(st)} stitches')
     for k, v in enumerate(vals): print(f'  {k + 1}: {key} = {v:g}')
 
 

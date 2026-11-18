@@ -1,6 +1,6 @@
 # Tikkimise teadmised
 
-Reeglid, mille järgi digiteerija (inimene või Ink/Stitch'i kasutaja) tavaliselt otsustab, koos põhjustega. `digitize.py` järgib neid vaikimisi, `plan.json` ja `--fabric` lubavad neid kujundi või kanga kaupa muuta. Arvud on lähtepunktid: lõpliku otsuse teeb proovitikand.
+Reeglid, mille järgi digiteerija tavaliselt otsustab, koos põhjustega. `digitize.py` järgib neid vaikimisi, `plan.json` ja `--fabric` lubavad neid kujundi või kanga kaupa muuta. Arvud on lähtepunktid: lõpliku otsuse teeb proovitikand.
 
 ## 1. Füüsika lühidalt
 
@@ -34,6 +34,7 @@ Satiini ja tatami vahel valitakse kujundi laiuse järgi: 2 × pindala / ümberm�
 - **Otsad kontuuril** lõpevad täispika pistega mõlemalt servalt, muidu jääb nurka kolmnurk.
 - **Vabad otsad:** viimased pisted pööravad otsa serva suunaliseks (kaldus otsal, nt K ja A jalal, viltu). Nii sulgub ots täpselt ning tippu ei kuhju lehvikut.
 - **Ristumised:** pikem joon läheb läbi ja lühem lõpeb selle serval. Läbiv joon läheb välisservast üle sama palju, kui risti olev joon on kompensatsiooni tõttu laiem (muidu paistab ots lühem, nt E püstkriips). Kitsas kiil, mida täide ei kata, kaetakse pikendusega. Laiem tühimik saab enne satiini väikese tatami.
+- **Silmused (o, a, b, d, p, q kõhud):** sammas käib ringiga ümber, pisted on alati üle sammaste (risti), mitte silmusega kaasa. Kõht algab ja lõpeb püstkriipsu serval. Püstkriips läheb ise läbi kuni oma otsani, ka siis, kui kõhu all on sellest järel vaid umbes üks laius.
 - **Kompensatsioon:** 0,15–0,3 mm kummalegi poole (vaikimisi 0,18). Venivale kangale rohkem, stabiilsele vähem.
 
 ## 5. Tatami
@@ -66,11 +67,11 @@ Satiini ja tatami vahel valitakse kujundi laiuse järgi: 2 × pindala / ümberm�
 
 | Kangas | Tatami reavahe | Satiin | Kompensatsioon | Alustikk | Satiin vähemalt | Tugimaterjal |
 |---|---|---|---|---|---|---|
-| `linane`, `puuvill` (kootud, stabiilne) | 0,30 | 0,40 | 0,18 | tavaline | 1,0 mm | rebitav |
-| `teksas`, `kanvas` (paks, stabiilne) | 0,40 | 0,40 | 0,15 | tavaline | 1,0 mm | rebitav |
-| `trikoo` (T-särk, polo, veniv) | 0,40 | 0,45 | 0,30 | tihedam (0,75) | 1,2 mm | lõigatav + kinnitus |
-| `fliis`, `frotee` (karvane) | 0,40 | 0,40 | 0,25 | tihedam (0,75), satiinile siksak | 1,5 mm | lõigatav; peale vees lahustuv kile |
-| `nahk`, `vinüül` | 0,50 | 0,45 | 0,12 | vähe (ainult serv) | 1,2 mm | rebitav; augud jäävad – vähem pisteid |
+| `linen`, `cotton` (linane, puuvill; kootud, stabiilne) | 0,30 | 0,40 | 0,18 | tavaline | 1,0 mm | rebitav |
+| `denim`, `canvas` (teksas, kanvas; paks, stabiilne) | 0,40 | 0,40 | 0,15 | tavaline | 1,0 mm | rebitav |
+| `jersey` (trikoo: T-särk, polo, veniv) | 0,40 | 0,45 | 0,30 | tihedam (0,75) | 1,2 mm | lõigatav + kinnitus |
+| `fleece`, `terry` (fliis, frotee; karvane) | 0,40 | 0,40 | 0,25 | tihedam (0,75), satiinile siksak | 1,5 mm | lõigatav; peale vees lahustuv kile |
+| `leather`, `vinyl` (nahk, vinüül) | 0,50 | 0,45 | 0,12 | vähe (ainult serv) | 1,2 mm | rebitav; augud jäävad – vähem pisteid |
 
 Allikad: Ink/Stitch'i lähtekood (vaikeväärtused: reavahe 0,25, satiin 0,4, lühikesed pisted 0,25 mm / 15%, 4 nihet, alustikk 3 × reavahe). Tööstuslikud digiteerimisjuhendid (EmbroideryHoop, Embroidery Legacy, Forum fonts, mySewnet). StitchPilot (reavahe kanga järgi).
 
@@ -84,3 +85,10 @@ Inimene proovib tavaliselt 1–2 varianti. Arvuti saab proovida sadu ja hinnata 
 - lõigete arv, pistete arv, lühikesed ja pikad pisted.
 
 Valitakse väikseima kaaluga summaga variant ja otsused kirjutatakse `plan.json` faili. Kaalud on `optimize.py` alguses. Kanga käitumist arvuti ei näe: lõpliku kinnituse annab proovitikand.
+
+## 10. Ääris, kontuuritäide, aplikatsioon, ristpiste
+
+- **Ääris (satiin täidise ümber):** tatami serv on alati veidi sakiline ja tõmbub. Satiinriba (2–4 mm) katab selle ja annab terava, läikiva serva. Täidis läheb ääriste alla 0,3–0,5 mm, muidu tekib tõmbest pilu. Alla ääriste keskjoon. Nurgad tehakse pöördega (lehvik sisenurga ümber); seal on niiti rohkem, tihedusekaardil punane täpp nurgas on tavaline. Ringi algus sirge külje keskel, mitte nurgas (nurgas jääb algus ja lõpp näha).
+- **Kontuuritäide:** read käivad kujundi servaga kaasa. Ümar kujund (ring, leht, süda) paistab kumer, sest niidi suund muutub pidevalt ja valgus langeb igal pool eri nurga all (vt 6). Tõmme on kõigis suundades ühtlane, nii et ring jääb ümmargune (tatami teeb ringi ridade suunas lühemaks). Ringid tikitakse ühe spiraalina: eraldi ringide algused teevad nähtava „õmbluse“ kiire. Spiraal töötab, kuni kujund on üks tükk ilma aukudeta; keerulisemal kujundil tikitakse ringid eraldi, igaüks lähima ringi kõrvalt. Üks kiht annab ~3–4 mm/mm² (õhem kui tatami alustikuga); tugev kangas või õhuke välimus on siis OK, muidu väiksem reavahe.
+- **Aplikatsioon:** suur ala tehakse kangatükist, mitte niidist: vähem pisteid, pehmem, kiirem. Järjekord on alati sama: (1) paigutusjoon näitab, kuhu kangas panna; peatus; (2) kinnitusjoon 0,5 mm joonest seespool hoiab kanga paigal; peatus, lõika liigne kangas kinnitusjoone lähedalt ära; (3) satiinääris (2,5–4 mm) katab lõigatud serva. Kitsam ääris kui ~2,5 mm laseb kiudu välja. Masin peatub värvivahetusena sama värviga, seega peab tikkija teadma, mis peatuse ajal teha (PDF esileht).
+- **Ristpiste:** folk- ja tikandimustrid (nt rahvariided) on ruudustikul; käsitöö ristpiste matkimiseks tehakse iga rist kahe diagonaaliga ühisel ruudustikul. Ruudu suurus 1,5–3 mm: väiksem ruut kuhjub (keskpunktis kaks kihti), suurem jääb lahtiseks. Ruudustik on ühine kogu tikandil, muidu ei lähe eri kujundite ristid kokku. Kujundi serv on astmeline (ruudustiku järgi) – see kuulub stiili juurde; täpse kontuuri jaoks on vaja teist tehnikat.

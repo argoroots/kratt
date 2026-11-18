@@ -1,6 +1,6 @@
 """Try many digitizing variants per shape and keep the best (writes plan.json for gen.py --plan).
 
-python3 optimize.py pilt.svg --size 150 [--fabric linane] [--angle 45] [--set k=v] [--plan vana.json]
+python3 optimize.py image.svg --size 150 [--fabric linen] [--angle 45] [--set k=v] [--plan old.json]
        [--only 10,11,0] [--angles] [--out plan.json]
 
 Every shape is stitched alone in every variant and measured (thread counted 0.3 mm wide):
@@ -92,11 +92,11 @@ def main():
         g0 = affinity.translate(e['geom'], -e['geom'].bounds[0], -e['geom'].bounds[1])
         hit = next((best for g, best in done if g.symmetric_difference(g0).area < 0.02 * g0.area), None)
         if hit is not None:
-            plan['shapes'][str(i)] = dict(plan['shapes'].get(str(i), {}), **hit); print(f'{i:3} = sama kuju'); continue
+            plan['shapes'][str(i)] = dict(plan['shapes'].get(str(i), {}), **hit); print(f'{i:3} = same shape'); continue
         base = dict(plan['shapes'].get(str(i), {}))      # stitch type stays as the rules (or the given plan) say
         if kind == 'satin':
             keys = list(SATIN_VARIANTS); combos = [dict(zip(keys, v)) for v in itertools.product(*SATIN_VARIANTS.values())]
-        elif a.angles:
+        elif a.angles and kind == 'tatami':
             combos = [dict(fill_angle=(a.angle + d)) for d in (0, 15, -15, 30, -30, 45, -45, 90)]
         else: combos = [{}]
         res = []
@@ -107,7 +107,7 @@ def main():
             res.append((round(score(m), 2), changed, ent, m))
         res.sort(key=lambda r: (r[0], r[1])); sc, _, best, m = res[0]
         plan['shapes'][str(i)] = best; done.append((g0, best))
-        print(f'{i:3} {kind:6} {len(combos):3} varianti, parim {sc:7.2f} {m}  {({k: best[k] for k in best if k != "stitch"})}')
+        print(f'{i:3} {kind:6} {len(combos):3} variants, best {sc:7.2f} {m}  {({k: best[k] for k in best if k != "stitch"})}')
     json.dump(plan, open(a.out, 'w'), ensure_ascii=False, indent=1)
     print('->', a.out)
 

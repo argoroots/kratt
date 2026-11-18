@@ -2,9 +2,11 @@
 
 python3 preview.py "out/Nimi 150.pes" [--fabric "#f2efe8"] [--px 10 | --long 1200]
 
-Writes next to the file:
-  <file>.niit.png    stitches drawn as thread (0.4 mm wide, thread colour, light from top left)
-  <file>.tihedus.png thread length per mm2 (smoothed over ~1 mm), 7 levels from green to red
+Working pictures for checking (not for the user: the user gets the project PDF and the machine files).
+Writes to check/ (--dir):
+  <file>.thread.png    stitches drawn as thread (0.4 mm wide, thread colour, light from top left)
+  <file>.density.png thread length per mm2 (smoothed over ~1 mm), 7 levels from green to red
+  <file>.line.png    with --line: 400x400 line picture, only when the design goes into a collection
 Prints the share of the design on each level.
 """
 import argparse, math, os
@@ -14,14 +16,26 @@ from PIL import Image, ImageDraw, ImageFont
 THREAD = 0.4                         # thread width on fabric, mm
 # thread length per mm2 (smoothed over ~1 mm). One layer of tatami (0.3 mm rows) + underlay is about 4-5,
 # satin (0.4 mm) + underlay about 5-6; more than ~8.5 means layers piling up.
-LEVELS = [(2.0, '#1a9850', 'alla 2 – serv või hõre'),
-          (4.0, '#66bd63', '2–4 – õhuke'),
-          (5.5, '#a6d96a', '4–5,5 – tavaline täidis'),
-          (7.0, '#fee08b', '5,5–7 – tihe satiin'),
-          (8.5, '#fdae61', '7–8,5 – kaks kihti'),
-          (10., '#f46d43', '8,5–10 – paks, vaata üle'),
-          (1e9, '#d73027', 'üle 10 – liiga paks')]
+LEVELS = [(2.0, '#1a9850', 'under 2 – edge or sparse'),
+          (4.0, '#66bd63', '2–4 – thin'),
+          (5.5, '#a6d96a', '4–5.5 – normal fill'),
+          (7.0, '#fee08b', '5.5–7 – dense satin'),
+          (8.5, '#fdae61', '7–8.5 – two layers'),
+          (10., '#f46d43', '8.5–10 – thick, check'),
+          (1e9, '#d73027', 'over 10 – too thick')]
 BANDS = LEVELS   # old name
+
+
+def meta_colours(p, fn):
+    """gen.py's meta.json beside the file knows each thread block's colour; a PES read back loses it
+    when a machine stop repeats a colour (appliqué)"""
+    import os, json
+    mf = os.path.join(os.path.dirname(fn) or '.', 'meta.json')
+    try: m = json.load(open(mf))
+    except (OSError, ValueError): return
+    if not m.get('blocks'): return
+    for i, t in enumerate(p.threadlist):
+        if i < len(m['blocks']): t.set_hex_color(m['colors'][m['blocks'][i]]['hex'])
 
 
 def segments(p):
@@ -128,19 +142,21 @@ def main():
     ap.add_argument('files', nargs='+')
     ap.add_argument('--fabric', default='#f2efe8', help='fabric colour')
     ap.add_argument('--px', type=float, default=10, help='pixels per mm')
-    ap.add_argument('--line', action='store_true', help='also <file>.joon.png: catalogue picture 400x400')
+    ap.add_argument('--line', action='store_true', help='also <file>.line.png: catalogue picture 400x400')
     ap.add_argument('--long', type=int, help='thread picture: longer side in pixels (instead of --px), e.g. 1200')
+    ap.add_argument('--dir', default='check', help='folder for the pictures (default check/)')
     a = ap.parse_args()
+    os.makedirs(a.dir, exist_ok=True)
     for fn in a.files:
-        p = pe.read(fn); segs = segments(p)
+        p = pe.read(fn); meta_colours(p, fn); segs = segments(p)
         xs = [q[0] for s in segs for q in s[:2]]; ys = [q[1] for s in segs for q in s[:2]]
         box = (min(xs), min(ys), max(xs), max(ys))
-        base = os.path.splitext(fn)[0]
+        base = os.path.join(a.dir, os.path.splitext(os.path.basename(fn))[0])
         px = a.long / max(box[2] - box[0], box[3] - box[1]) if a.long else a.px
-        thread_picture(segs, box, px, a.fabric).save(base + '.niit.png', optimize=True)
-        if a.line: line_picture(p).save(base + '.joon.png')
+        thread_picture(segs, box, px, a.fabric).save(base + '.thread.png', optimize=True)
+        if a.line: line_picture(p).save(base + '.line.png')
         g, _, _ = density(segs, box)
-        density_picture(g, 0.25, a.px).save(base + '.tihedus.png')
+        density_picture(g, 0.25, a.px).save(base + '.density.png')
         v = g[g > 0.6]; lo = 0.6; parts = []
         for hi, _, txt in LEVELS:
             share = ((v > lo) & (v <= hi)).sum() / len(v) * 100; lo = hi

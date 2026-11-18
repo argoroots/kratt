@@ -2,7 +2,7 @@
 
 Claude'i oskused (skills).
 
-## tikkimisfail
+## Stitch-o-matic
 
 Teeb logost või muust vektorpildist tikkimisfailid valitud masinale, mitmes suuruses. Kaasa tuleb PDF, kus mustrid on 1:1 suuruses ja kus on testimise juhend. Soovi korral teeb ka animatsiooni, kus on näha, kuidas muster tikitakse.
 
