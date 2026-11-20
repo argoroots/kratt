@@ -45,7 +45,8 @@ def load(f):
                 n=p.count_stitch_commands(pe.STITCH), t=trims)
 D = {f: load(f) for f in FILES}
 fmt = lambda v: f'{v:.1f}'.replace('.', ',')
-PAGES = 1 + 3 * len(FILES)
+COVER = 1                       # cover pages; found by a trial run below (many colours spill to page 2)
+PAGES = COVER + 3 * len(FILES)
 FABRIC = os.environ.get('FABRIC', '#f2efe8')   # fabric colour in the look drawing
 
 # ---------------- cover (portrait)
@@ -66,7 +67,7 @@ def cover(c):
         t.setStyle(TableStyle(sty)); return t
     rows = [['Leht', 'Fail', 'Mõõdud (L × K)', 'Pisted', 'Lõiked']]
     for i, f in enumerate(FILES):
-        d = D[f]; rows.append([f'{2 + 3 * i}–{4 + 3 * i}', f, f"{fmt(d['w'])} × {fmt(d['h'])} mm", str(d['n']), str(d['t'])])
+        d = D[f]; rows.append([f'{COVER + 1 + 3 * i}–{COVER + 3 + 3 * i}', f, f"{fmt(d['w'])} × {fmt(d['h'])} mm", str(d['n']), str(d['t'])])
     files_t = tbl(rows, [16 * mm, 58 * mm, 38 * mm, 20 * mm, 18 * mm], right=(3, 4))
     crow = [['Nr', '', 'Originaal', '', 'Brother', '', 'Janome']]
     for i, k in enumerate(COLS, start=1):
@@ -100,6 +101,7 @@ def cover(c):
              *([B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm, alustikk laiuse järgi (kitsal keskjoon, laiemal servad); sama kuju tikitakse alati ühtemoodi.")] if 'satin' in KIND else []),
              *([B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste.")] if 'run' in KIND else []),
              *([B(f"Ääris: täidise serval satiinriba {num(PR.get('fill_border', 0) or PR.get('applique_border', 3))} mm, nurgad pöördega; varjab täidise serva ja tõmbe.")] if 'border' in KIND else []),
+             *([B(f"Serv: pärast täidist {int(PR.get('fill_outline', 1))}× sirgpiste mööda serva; teeb serva teravaks ja peidab ridade otsad.")] if 'outline' in KIND else []),
              *([B(f"Kontuuritäide: read käivad kujundi servaga paralleelselt, reavahe {num(PR['fill_spacing'])} mm, üks pidev spiraal (ilma õmbluseta).")] if 'contour' in KIND else []),
              *([B(f"Ristpiste: ruut {num(PR.get('cross_size', 2.0))} mm, ruudustik ühine kogu tikandil; rist = kaks diagonaali.")] if 'cross' in KIND else []),
              *([B("Aplikatsioon: masin peatub 2 korda – (1) pärast paigutusjoont: aseta kangatükk joone peale; (2) pärast kinnitusjoont: lõika kangas joone lähedalt ära, siis ääris. Peatus näeb välja nagu värvivahetus sama niidiga.")] if 'applique' in KIND else []),
@@ -120,8 +122,13 @@ def cover(c):
         need = sum(f.wrap(FW - 12, FH)[1] + f.getSpaceBefore() + f.getSpaceAfter() for f in story)
         if need < FH - 18: break
     fr = Frame(18 * mm, 14 * mm + dh + 5 * mm, FW, FH, showBoundary=0); fr.addFromList(story, c)
-    if story: print('WARNING: cover overflow', len(story))
     c.setFont('Helvetica', 7); c.setFillColor(GREY); c.drawRightString(W - 18 * mm, 9 * mm, f'1 / {PAGES}')
+    page = 1
+    while story:                                        # what did not fit goes on the next portrait page
+        c.showPage(); page += 1
+        Frame(18 * mm, 14 * mm, W - 36 * mm, H - 29 * mm, showBoundary=0).addFromList(story, c)
+        c.setFont('Helvetica', 7); c.setFillColor(GREY); c.drawRightString(W - 18 * mm, 9 * mm, f'{page} / {PAGES}')
+    return page
 
 # ---------------- CAD sheet (landscape)
 def arrow(c, x, y, ang):
@@ -270,11 +277,17 @@ def sheet(c, d, page, total, kind):
     for i in range(0, 6): c.drawCentredString(sx + i * 10 * mm, sy - 3 * mm, str(i * 10))
     c.drawString(sx + 52 * mm, sy - 3 * mm, 'mm')
 
+import io
+# for one PDF made of several designs: NO_COVER=1 leaves the cover out, PAGE_OFFSET/PAGE_TOTAL number the pages
+NO_COVER = os.environ.get('NO_COVER') == '1'
+OFF = int(os.environ.get('PAGE_OFFSET', '0'))
+COVER = 0 if NO_COVER else cover(canvas.Canvas(io.BytesIO(), pagesize=A4))   # trial run
+PAGES = int(os.environ.get('PAGE_TOTAL', '0')) or COVER + 3 * len(FILES)
 c = canvas.Canvas(os.environ.get('PDF_OUT', f'{NAME} - Projekt.pdf'), pagesize=A4)
 c.setTitle(f'{NAME} – tikkimisfailid')
-cover(c); c.showPage()
+if not NO_COVER: cover(c); c.showPage()
 for i, f in enumerate(FILES):
     for j, kind in enumerate(KINDS):
-        c.setPageSize(landscape(A4)); sheet(c, D[f], 2 + 3 * i + j, PAGES, kind); c.showPage()
+        c.setPageSize(landscape(A4)); sheet(c, D[f], OFF + COVER + 1 + 3 * i + j, PAGES, kind); c.showPage()
 c.save()
 for f in FILES: print(f, fmt(D[f]['w']), fmt(D[f]['h']))

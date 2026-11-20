@@ -15,6 +15,7 @@ OPTS = dict(
     short_inset=(0.15, 0.3),  # ... those stitches are shortened by these shares of the width, in turn
     pull_mm=0.0,         # widen columns by this many mm on each side (pull compensation)
     min_width=1.0,       # columns narrower than this (mm, median) are widened to it (thin text, towel)
+    max_widen=0.3,       # ... but by at most this much in all (mm): small text keeps its counters open
     pull_pct=0.0,        # widen columns by this % of their width (half on each side)
     push_mm=0.0,         # shorten free stroke ends by this much (pull along the column)
     contour_from=2.0,    # column width from which underlay is contour (edge runs) instead of centre walk
@@ -119,7 +120,10 @@ def branches(poly, width):
                     if i == j: continue
                     di = outdir(segs[i][0], ki == 1); dj = outdir(segs[j][0], kj == 1)
                     dot = di[0] * dj[0] + di[1] * dj[1]
-                    if dot < -0.85 and (best is None or dot < best[0]): best = (dot, i, ki, j, kj)
+                    # three-way junction of long strokes (the U of a tuning fork curves into it): join more readily
+                    long_ = min(segs[i][0].length, segs[j][0].length) >= 8 * width
+                    lim = -0.65 if len(ends) == 3 and long_ else -0.85
+                    if dot < lim and (best is None or dot < best[0]): best = (dot, i, ki, j, kj)
             if best is None: break
             _, i, ki, j, kj = best
             A = trim_j(segs[i][0], ki == 1, bend); B = trim_j(segs[j][0], kj == 1, bend)
@@ -151,8 +155,19 @@ def branches(poly, width):
             # a stroke going through to the outer edge goes past it by the pull compensation, like the side
             # edges of the stroke it crosses (else its end looks short next to them: E stem)
             if e[0] == 't': c[end] = _extend(_back(c, end, width), c[end], poly, width,
-                                             inset=-(OPTS['pull_mm'] + max(0.0, (OPTS['min_width'] - width) / 2)))
+                                             inset=-(OPTS['pull_mm'] + min(OPTS['max_widen'] / 2, max(0.0, (OPTS['min_width'] - width) / 2))))
             elif e[0] == 'j': c[end] = _straight(_back(c, end, width), c[end], bend - jc, poly)
+        if width >= 2.5:                 # wide column: the skeleton tail bends to a corner of the end;
+            for end, e in ((0, e0), (-1, e1)):    # drop the bent last piece, the end runs straight on (below)
+                if e[0] != 'e': continue
+                pts_ = c if end == -1 else c[::-1]
+                ang = lambda a_, b_: math.atan2(b_[1] - a_[1], b_[0] - a_[0])
+                while len(pts_) >= 3:
+                    tl = math.dist(pts_[-2], pts_[-1])
+                    da = abs((ang(pts_[-2], pts_[-1]) - ang(pts_[-3], pts_[-2]) + math.pi) % (2 * math.pi) - math.pi)
+                    if tl < 1.5 * width and da > math.radians(15): pts_ = pts_[:-1]
+                    else: break
+                c = pts_ if end == -1 else pts_[::-1]
         if e0[0] == 'e': c[0] = _extend(_back(c, 0, width), c[0], poly, width)
         if e1[0] == 'e': c[-1] = _extend(_back(c, -1, width), c[-1], poly, width)
         out.append((c, e0[0] == 'e', e1[0] == 'e', e0[0] in 'et', e1[0] in 'et'))   # caps, closed ends
@@ -334,12 +349,31 @@ def column_pairs(poly, line, spacing=0.4, width=None, caps=(False, False)):
     if not neg or not pos: return []
     mn, mp = 1.12 * float(np.median(neg)), 1.12 * float(np.median(pos))
     if width: mn, mp = min(mn, 0.62 * width), min(mp, 0.62 * width)
+    # a column whose width changes along it (taper, wedge): clamp to the local median instead, over
+    # +-1.5 widths, else the wide end is cut down to the column's middle width and left to gap fill
+    loc = None
+    ok_ = [s_ for s_ in samples if s_[2] is not None and s_[2] < 0 < s_[3]]
+    if width and len(ok_) > 8:
+        wl = np.array([s_[3] - s_[2] for s_ in ok_])
+        ix = np.arange(len(wl))
+        # only a real taper (width grows steadily along the column), not the bulges at junctions of K or M
+        if np.percentile(wl, 90) > 1.6 * np.percentile(wl, 10) and abs(np.corrcoef(ix, wl)[0, 1]) > 0.85:
+            idx = [i for i, s_ in enumerate(samples) if s_[2] is not None and s_[2] < 0 < s_[3]]
+            step = L / (n - 1); win = max(1, int(1.5 * width / step))
+            ng = np.full(n, np.nan); ps = np.full(n, np.nan)
+            for i in idx: ng[i] = -samples[i][2]; ps[i] = samples[i][3]
+            loc = []
+            for i in range(n):
+                a_, b_ = ng[max(0, i - win): i + win + 1], ps[max(0, i - win): i + win + 1]
+                a_, b_ = a_[~np.isnan(a_)], b_[~np.isnan(b_)]
+                loc.append((1.12 * float(np.median(a_)) if len(a_) else mn, 1.12 * float(np.median(b_)) if len(b_) else mp))
     ws_ = [s_[3] - s_[2] for s_ in samples if s_[2] is not None]
-    extra = max(0.0, (OPTS['min_width'] - float(np.median(ws_))) / 2) if ws_ else 0.0
+    extra = min(OPTS['max_widen'] / 2, max(0.0, (OPTS['min_width'] - float(np.median(ws_))) / 2)) if ws_ else 0.0
     dense = []; last = (-np.median(neg), np.median(pos))
-    for (p, nrm, a, b), f in zip(samples, allow):
+    for i_, ((p, nrm, a, b), f) in enumerate(zip(samples, allow)):
         if a is None: a, b = last          # past the outline (through-going end): keep the last full width
-        a = max(a, -mn * f); b = min(b, mp * f)
+        cn, cp_ = loc[i_] if loc else (mn, mp)
+        a = max(a, -cn * f); b = min(b, cp_ * f)
         if b - a < 0.2: m_ = (a + b) / 2; a, b = m_ - 0.1, m_ + 0.1
         if b - a >= 0.8 * (mn + mp) / 1.12: last = (a, b)   # only full-width stitches are carried on
         if OPTS['pull_pct']: g = (b - a) * OPTS['pull_pct'] / 200; a, b = a - g, b + g

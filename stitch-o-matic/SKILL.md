@@ -45,7 +45,7 @@ Reeglid ja nende põhjused (kangas, tihedus, alustikk, suund, nurgad) on failis 
 |---|---|---|
 | Joon < 0,8 mm | 3× sirgpiste | piste kuni 2,0 mm, kurvil lühem (kõrvalekalle ≤ `run_tol` 0,1 mm) |
 | Lai kujund (2·pindala/ümbermõõt > `satin_max` 2,8 mm suurimas suuruses) | servaalustikk + ristialustikk + tatami | serv 0,35 mm seest; ristialustikk risti, `fill_under_spacing` 0,9 mm; reavahe 0,30 mm (0,1 mm kordne); piste ≤ 4 mm |
-| Kitsas kujund, tekst | satiin + alustikk laiuse järgi | tihedus 0,40 mm; satiin/tatami valitakse suurima suuruse järgi, et kõik suurused oleks ühtemoodi |
+| Kitsas kujund, tekst | satiin + alustikk laiuse järgi | tihedus 0,40 mm; satiin ainult joonetaolisele osale: suurim siseringjoon ≤ `satin_blob` (1,9) × keskmine laius ja ≤ 1,5 × `satin_max` (muidu ring, täpp, kammi lai riba → tatami); satiin/tatami valitakse suurima suuruse järgi, et kõik suurused oleks ühtemoodi; plaan ei saa sundida satiini üle `satin_force_max` 10 mm |
 | Kompensatsioon `comp` 0,18 mm | piste suunas | tatami read mõlemast otsast pikemad, satiin kummaltki poolt laiem; kujundit ennast ei suurendata |
 | Kinnitus | algus 2× edasi-tagasi ≤ 0,7 mm, lõpp tagasi mööda viimast pistet ≤ 0,5 mm | kujundi sees, ainult lõike juures |
 | Niidilõige | järgmine algus > 2 mm või üleminek läheks üle valmis satiini | TRIM + JUMP |
@@ -56,6 +56,7 @@ Reeglid neid ise ei vali: `swatch.py --list` pakub mõõtmise järgi (3.1 p 1–
 | Plaanis | Tehnika | Seaded |
 |---|---|---|
 | `fill_border` > 0 (tatami või contour juures) | satiinääris täidise serval | laius mm (2–4) |
+| `fill_outline` 1 või 3 (tatami või contour juures) | pärast täidist sirgpiste mööda serva | kordade arv |
 | `"stitch": "contour"` | kontuuritäide | `fill_spacing`, `fill_border` |
 | `"stitch": "applique"` | aplikatsioon, 2 peatust | `applique_border` (3 mm) |
 | `"stitch": "cross"` | ristpiste | `cross_size` (2 mm) |
@@ -144,4 +145,4 @@ python3 check.py out/*.pes out/*.jef
 python3 preview.py out/*.pes --long 1200
 python3 pdfcad.py
 ```
-Ilma `--working` failita jääb PES v6. Parameetrid: `--set nimi=väärtus` (vt `digitize.DEFAULTS`), nt `fill_spacing`, `fill_under_spacing`, `satin_spacing`, `satin_max`, `satin_min`, `satin_mitre`, `satin_split`, `satin_short`, `satin_reach`, `satin_gap`, `comp`, `run_tol`, `overlap`, `trim`.
+Ilma `--working` failita jääb PES v6. Parameetrid: `--set nimi=väärtus` (vt `digitize.DEFAULTS`), nt `fill_spacing`, `fill_under_spacing`, `satin_spacing`, `satin_max`, `satin_min`, `satin_widen_max`, `satin_blob`, `satin_force_max`, `satin_mitre`, `satin_split`, `satin_short`, `satin_reach`, `satin_gap`, `comp`, `run_tol`, `overlap`, `trim`.

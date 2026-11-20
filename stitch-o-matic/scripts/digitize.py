@@ -87,7 +87,7 @@ def fill(poly, angle, spacing, maxlen, offset_row=0):
                 seg = LineString([pts[-1], (row[0], y)])
                 if not rpc.contains(seg):          # straight hop would leave the shape
                     tp = travel_path(pts[-1], (row[0], y), rpc)
-                    if LineString(tp).length < 4 * seg.length + 2: pts += tp[1:-1]
+                    if len(tp) > 1 and LineString(tp).length < 4 * seg.length + 2: pts += tp[1:-1]
                 else:                                       # long hop inside the shape: stitches <= maxlen
                     k = math.ceil(seg.length / maxlen)
                     pts += [(pts[-1][0] + (row[0] - pts[-1][0]) * i / k, pts[-1][1] + (y - pts[-1][1]) * i / k) for i in range(1, k)]
@@ -180,6 +180,8 @@ DEFAULTS = dict(
     fill_maxlen=4.0,    # longest tatami stitch, mm
     fill_under_spacing=0.9,  # tatami cross underlay row step, mm (about 3x fill_spacing)
     fill_border=0.0,    # satin border round tatami / contour fills, mm wide (0 = none); hides the fill's edge
+    fill_outline=0,     # running stitch along the edge after a tatami / contour fill: 0 = none, 1 or 3 passes;
+                        # makes the edge sharp and hides the jagged row ends
     applique_border=3.0,  # appliqué: width of the satin covering the cut fabric edge, mm
     cross_size=2.0,     # cross stitch: cell size, mm (grid starts at the design's top left corner)
     satin_spacing=0.4,  # satin: distance between stitches on the same side, mm
@@ -194,7 +196,11 @@ DEFAULTS = dict(
     satin_pull_pct=0.0, # satin: widen columns by this % of their width (pull compensation)
     satin_push=0.0,     # satin: shorten free column ends by this many mm (push compensation)
     satin_short=0.25,   # satin curves: inner points closer than this (mm) get a short stitch
-    satin_min=1.0,      # satin columns narrower than this (mm) are made this wide
+    satin_min=1.0,      # satin columns narrower than this (mm) are made this wide ...
+    satin_widen_max=0.3,  # ... but at most this much wider (mm), so small text keeps its counters open
+    satin_force_max=10.0,  # even a plan cannot force satin on a shape wider than this (mm, average): tatami
+    satin_blob=1.9,     # a part whose largest inscribed circle is wider than this x its average width is not a
+                        # stroke (disc, blob, comb with a wide bar): tatami, else satin follows a skeleton that is a point
     satin_contour_from=2.0,  # satin underlay: columns this wide (mm) get edge runs instead of a centre walk
     satin_german_from=4.0,   # ... and from this width edge runs + low zigzag
     satin_split=7.0,    # satin stitches longer than this (mm) are split (wide columns)
@@ -206,13 +212,24 @@ DEFAULTS = dict(
 PLAN_KEYS = set(DEFAULTS) | {'stitch', 'underlay'}
 
 
+def stroke_like(q, c):
+    """satin fits a part that is a stroke: narrow on average and nowhere much wider than that"""
+    w = 2 * q.area / q.length
+    if w > c['satin_max']: return False
+    from shapely.ops import polylabel
+    pt = polylabel(q, 0.01)
+    d = 2 * min([q.exterior.distance(pt)] + [r.distance(pt) for r in q.interiors])
+    # nowhere much wider than its average, and nowhere wider than 1.5 x satin_max (the wide bar of a comb)
+    return d <= c['satin_blob'] * w and d <= 1.5 * c['satin_max']
+
+
 def suggest(g, c=None):
     """measured hints for the plan (shape g in mm at the largest size): what the rules pick and which
     other technique is worth offering, with the reason. Hints only: the person decides (KNOWLEDGE 10)."""
     c = c or DEFAULTS
     if g.is_empty or g.area <= 0: return 'run', []
     w = 2 * g.area / g.length
-    rule = 'satin' if w <= c['satin_max'] else 'tatami'
+    rule = 'satin' if all(stroke_like(q, c) for q in polys(g)) else 'tatami'
     out = []
     if rule == 'tatami':
         parts = list(g.geoms) if hasattr(g, 'geoms') else [g]
@@ -266,7 +283,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     STAGGERS = max(1, int(c['fill_staggers']))
     def set_satin(c):
         SAT.OPTS.update(pull_mm=float(c['comp']), pull_pct=float(c['satin_pull_pct']), push_mm=float(c['satin_push']),
-                        short_dist=float(c['satin_short']), split_len=float(c['satin_split']), mitre_max=float(c['satin_mitre']), reach=float(c['satin_reach']), gap_min=float(c['satin_gap']), min_width=float(c['satin_min']),
+                        short_dist=float(c['satin_short']), split_len=float(c['satin_split']), mitre_max=float(c['satin_mitre']), reach=float(c['satin_reach']), gap_min=float(c['satin_gap']), min_width=float(c['satin_min']), max_widen=float(c['satin_widen_max']),
                         contour_from=float(c['satin_contour_from']), german_from=float(c['satin_german_from']),
                         underlay=c.get('underlay'))
     set_satin(c)
@@ -286,9 +303,12 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
         if e['kind'] == 'run' and e.get('width', 0) * s >= c['stroke_as_fill']:
             e = dict(e, kind='fill', geom=g.buffer(e['width'] * s / 2, cap_style=2, join_style=2))
         if e['kind'] == 'fill':   # satin or tatami, decided at the reference size
-            ws = [2 * p.area / p.length for p in polys(affinity.scale(e['geom'], sr / s, sr / s, origin=(0, 0)).buffer(c['comp'], join_style=2))]
-            e['stitch'] = 'satin' if ws and max(ws) <= c['satin_max'] else 'tatami'
+            parts = polys(affinity.scale(e['geom'], sr / s, sr / s, origin=(0, 0)).buffer(c['comp'], join_style=2))
+            e['stitch'] = 'satin' if parts and all(stroke_like(q, c) for q in parts) else 'tatami'
             if e['cfg'].get('stitch') in FILL_STITCHES: e['stitch'] = e['cfg']['stitch']
+            if e['stitch'] == 'satin' and any(2 * q.area / q.length > c['satin_force_max'] for q in polys(e['geom'])):
+                print(f"WARNING: shape {idx} is too wide for satin at this size; tatami instead")
+                e['stitch'] = 'tatami'
         if e['cfg'].get('stitch') == 'run' and e['kind'] == 'run': e['stitch'] = 'run'
         els.append(e)
     els = knockout(els, c['overlap'])
@@ -362,7 +382,22 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
             if k > 0 and math.dist(cur[0], blk[0]) > 0.6: tie_off(); stitch_block(blk)   # each part from its top
             else: stitch_block(blk, connect=k > 0)
         tie_off()
+        if c['fill_outline'] > 0: outline(full, c)
         if c['fill_border'] > 0: border(full, c)
+
+    def outline(p, c=c):
+        """running stitch round every edge of the shape, each ring starting next to where the last one ended"""
+        rings = [r for q in polys(p) for r in [q.exterior] + list(q.interiors) if r.length > 1.0]
+        while rings:
+            rings.sort(key=lambda r: r.distance(Point(cur[0])) if cur[0] else 0)
+            r = rings.pop(0)
+            line = start_on_side(list(r.coords), cur[0], 1.0)
+            pts = run(line, int(c['fill_outline']), 2.0)
+            near = cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim']
+            if not near and cur[0] is not None: tie_off()
+            stitch_block(pts, connect=near)
+        tie_off()
+        KINDS.add('outline')
 
     def border(p, c=c, w=None):
         """satin border along every outline ring: outer edge = outline + comp, inner edge w inside"""
@@ -417,6 +452,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
                 first = False
             i += 1
         tie_off()
+        if c['fill_outline'] > 0: outline(p, c)
         if c['fill_border'] > 0: border(p, c)
 
     def spiral(rings, near, step):
@@ -517,6 +553,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
             if k > 0 and jump: tie_off(); stitch_block(blk, under=ur, force_trim=True)
             else: stitch_block(blk, connect=k > 0, under=ur)
         tie_off()
+        if c['fill_outline'] > 0: outline(p, c)        # running stitch along the satin's edge, if asked
 
     # colour groups in order of first appearance; inside a group: document order,
     # narrow shapes (text) in reading order
