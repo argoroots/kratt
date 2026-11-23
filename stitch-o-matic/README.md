@@ -10,7 +10,11 @@ Claude teeb pildist masintikandi faili. Sina annad pildi ja ütled, mis masin, m
 - **Aplikatsioon:** suur ala tehakse kangatükist. Masin peatub ja PDF ütleb, mida peatuse ajal teha.
 - **Ristpiste** folk- ja ruutmustritele.
 - **Mitu värvi ja mitu suurust** korraga, kõik suurused tikitakse ühtemoodi.
-- **Kanga järgi seaded:** linane, puuvill, teksas, trikoo, fliis, frotee, nahk jt.
+- **Kanga järgi seaded:** linane, puuvill, teksas, trikoo, fliis, frotee, nahk jt. Venival kangal (trikoo, fliis) sõltub kompensatsioon pistete suunast.
+- **Kontroll enne andmist:** iga fail kontrollitakse, et pisted kataks kujundi täielikult ja ükski piste ei ulatuks serva taha. Praod, kiilud, augud ja üle serva minevad tipud leitakse koos asukohaga.
+- **Täpne suurus:** soovi korral tuleb tikandi tegelik mõõt täpselt soovitud suurusega; variant (nt ilma tekstita) samas mõõtkavas kui terve logo.
+- **Väike kiri peene niidiga** (60 wt): tähtede augud jäävad lahti.
+- **Foto võrdlus:** tikitud tulemuse foto võrreldakse failiga ja näidatakse, kus kangas tõmbas sisse või kuju venis.
 
 Claude pakub iga kujundi juures sobiva tehnika välja ja ütleb, miks. Otsuse teed sina.
 
@@ -31,7 +35,7 @@ Claude pakub iga kujundi juures sobiva tehnika välja ja ütleb, miks. Otsuse te
 
 ![PDF joonis: eeldatav välimus](examples/pdf-appearance.png)
 
-*Eeldatav välimus.* Nii peaks tikand välja nägema: niidi värvis ja paksuses, kanga taustal. Mõõtkava on 1 : 1, nii et prinditud lehte saab kanga peale panna ja võrrelda. Paremal on pealkirjaplokk (fail, mõõdud, pisted, niidilõiked), all mõõtjoonlaud.
+*Eeldatav välimus.* Nii peaks tikand pärast tikkimist välja nägema: kangas on satiini otsad sisse tõmmanud (failis on need selle võrra pikemad), niidi värvis ja paksuses, kanga tekstuuriga. Mõõtkava on 1 : 1, nii et prinditud lehte saab kanga peale panna ja võrrelda. Paremal on pealkirjaplokk (fail, mõõdud, pisted, niidilõiked), all mõõtjoonlaud.
 
 ![PDF joonis: pistete käik](examples/pdf-stitches.png)
 

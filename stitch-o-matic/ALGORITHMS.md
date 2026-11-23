@@ -19,6 +19,8 @@ Kuidas `scripts/` teeb pisted: samm-sammult, koos arvudega. Loe seda, kui parand
 6. **Vaba ots:** skeleti saba lõigatakse ära ja sammas pikeneb sirgelt tipuni. Laial sambal (≥ 2,5 mm) kõverdub skelett otsas nurga poole: kui viimane tükk (lühem kui 1,5 × laius) pöörab üle 15°, jäetakse see ära ja ots jätkub samba suunas. Viimase laiuse jooksul pööravad pisted otsa serva suunaliseks (pikim sirge kontuurilõik tipu juures; üle 60° viltu jäävad pisted risti). Iga piste lõigatakse kontuuriga; alla 0,25 mm pisted tipus jäetakse ära. Lehvikut ei tehta.
 7. **Laius:** ≤ min(1,12 × mediaan; 0,62 × laius), nurga pööramisel jagatud nurga koosinusega. Kontuurist väljas (läbiv ots) kantakse edasi viimane täislaiusega piste. Kompensatsioon `comp` + `satin_pull_pct` %, vabad otsad `satin_push` mm lühemaks. Alla `satin_min` (1,0 mm; froteel 1,5) sambad laiendatakse, aga kokku kõige rohkem `satin_widen_max` (0,3 mm) võrra, et väikese kirja augud lahti jääks. Kitsenev sammas (laius kasvab mööda sammast ühtlaselt: 90. protsentiil > 1,6 × 10. ja korrelatsioon > 0,85) piiratakse kohaliku mediaaniga ±1,5 laiuse ulatuses, mitte kogu samba mediaaniga; muidu lõigatakse lai ots keskmise laiuseni ja jääb vaheketäiteks.
 8. **Tihedus:** järgmine piste tuleb, kui enim liikunud külg (kurvi väliskülg) on eelmisest pistest risti mõõtes `satin_spacing`/2 kaugusel.
+   **Üle serva ei lähe:** iga satiinipiste lõigatakse kontuuri + kompensatsiooni (+ õhukese satiini laiendus + 0,1 mm) järgi, ümara puhvriga (nurga puhver ulatuks teravates tippudes kaugele välja). Kus keskjoon jookseb kujundist välja (M, N, W, A tipud, läbivad otsad), ei jää piste täislaiusena õhku.
+   **Pistete suund** arvutatakse keskjoonest ±pool laiust ulatuses, mitte ainult punktist. Kui keskjoonel on murdekoht (nt seal, kus haru ühineb), pööravad pisted järk-järgult; muidu pöörduvad nad korraga ja välisküljele jääb lahtine kiil (EMTA hargi U põhi, südame tipp).
 9. **Kurvi ja nurga sisekülg:** punkt, mis on samal küljel viimasest täispikast lähemal kui `satin_short` (0,25 mm), nihkub kordamööda 15% ja 30% laiusest sissepoole.
 10. **Otsad kontuuril** (vaba ots, läbiv ots) lõpevad täispika pistega mõlemalt servalt. Teise samba sisse jääv ots jääb lahti (vähem kihte).
 11. **Pikad pisted** üle `satin_split` (7 mm) saavad vahepunktid; nende koht nihkub pistest pisteni 1/4 võrra.
@@ -36,3 +38,18 @@ Kuidas `scripts/` teeb pisted: samm-sammult, koos arvudega. Loe seda, kui parand
 | `cross` | ristid ühisel ruudustikul (algus mustri vasakus ülanurgas); ruut võetakse, kui kujund katab sellest ≥ 50%; read maona, naaberristid ühendatakse ühise nurga kaudu | `cross_size` (2 mm) |
 
 Peatus on värvivahetus sama niidiga; `meta.json` → `stops` ja `blocks` (niidiplokk → värvitabeli rida) ning PDF ütleb peatused esilehel. Optimeerija neid ei muuda (ainult tatami nurk `--angles` korral).
+
+## Täidise erijuhud
+
+- **Äärisega täidise teravad tipud (< 60°):** äärise satiini nurgapiste võib olla kõige rohkem kaks korda poollaius, nii et tipp jääks paljaks. Täidis ulatub seal äärise alt tipuni: tipu ümber raadiusega `w/2 / sin(θ/2) − w + 0,4` (w = äärise laius).
+- **Kontuuritäite keskkoht:** viimane ring jätab kuni ühe reavahe laiuse ava (ellipsil pilu pika telje suunas). Keskele tikitakse sirgpiste mööda kujundi pikka telge, kolme ringi kaugusele, kus ringide teravad otsad veel lahku jäävad. Auguga kujundil (rõngas) seda ei tehta.
+
+
+## Eeldatav välimus (preview.look)
+
+Fail ei ole see, mis kangale jääb: satiin tõmbab kangast piste suunas kokku (selle vastu on tõmbekompensatsioon) ja lükkab sammast piki pikemaks. Eeldatav välimus teeb selle tagasi kanga enda arvudega:
+- satiinisammas = järjestikused üle 0,8 mm pisted, mis pööravad iga kord üle 120° uude nõelapisti (kolmekordne sirgpiste läheb sama joont tagasi ja ei ole satiin);
+- iga satiinipiste lüheneb kummastki otsast `comp × (1 + comp_stretch × (c − 0,5))` (c = |cos| venivuse suunaga), alla 1,5 mm pisted proportsionaalselt vähem, kõige rohkem 30 % pikkusest;
+- sammas pikeneb otstest 0,4 × comp (keskelt 0, otstes täis);
+- sirgpiste ja alustikk jäävad paika; satiin joonistatakse kumerana, sirgpiste ühtlase niidina, all kerge vari ja kanga tekstuur.
+Arvud on hinnang (comp on eeldatav tõmme); kui proov näitab muud, muuda kanga kompensatsiooni, mitte pilti.

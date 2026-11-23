@@ -24,5 +24,13 @@ def check(fn):
 
 
 if __name__ == '__main__':
+    import os, coverage
     for f in sys.argv[1:]:
-        print(f, check(f))
+        r = check(f)
+        pos = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(f))), 'outpos', os.path.basename(f))
+        pos = os.path.splitext(pos)[0] + '.pes'                 # coverage is checked on the PES in outpos/ (also for a JEF)
+        if os.path.exists(pos[:-4] + '.shapes.json') and os.path.exists(pos):
+            d = coverage._load(pos)
+            r['holes'] = coverage.holes(pos, _d=d)          # [] = fully covered
+            r['over_edge'] = coverage.overflow(pos, _d=d)   # [] = no needle point past comp + 0.3 mm
+        print(f, r)

@@ -71,9 +71,13 @@ Satiini ja tatami vahel valitakse kujundi laiuse järgi: 2 × pindala / ümberm�
 |---|---|---|---|---|---|---|
 | `linen`, `cotton` (linane, puuvill; kootud, stabiilne) | 0,30 | 0,40 | 0,18 | tavaline | 1,0 mm | rebitav |
 | `denim`, `canvas` (teksas, kanvas; paks, stabiilne) | 0,40 | 0,40 | 0,15 | tavaline | 1,0 mm | rebitav |
-| `jersey` (trikoo: T-särk, polo, veniv) | 0,40 | 0,45 | 0,30 | tihedam (0,75) | 1,2 mm | lõigatav + kinnitus |
+| `jersey` (trikoo: T-särk, polo, veniv) | 0,40 | 0,45 | 0,30 (suunaline ±25 %) | tihedam (0,75) | 1,2 mm | lõigatav + kinnitus |
 | `fleece`, `terry` (fliis, frotee; karvane) | 0,40 | 0,40 | 0,25 | tihedam (0,75), satiinile siksak | 1,5 mm | lõigatav; peale vees lahustuv kile |
 | `leather`, `vinyl` (nahk, vinüül) | 0,50 | 0,45 | 0,12 | vähe (ainult serv) | 1,2 mm | rebitav; augud jäävad – vähem pisteid |
+
+**Venivad kangad (trikoo, fliis):** silmuskude venib ühes suunas rohkem (T-särgi esiosal risti, mööda silmuseridu). Pisted, mis on venivuse suunas, tõmbavad kangast rohkem kokku, seega on kompensatsioon suunaline: `comp × (1 − s/2 … 1 + s/2)`, kõige suurem venivuse suunas (`comp_stretch`: trikoo 0,5, fliis 0,3; `stretch_angle` 0° = risti, kui kangas on raamis sirge). Trikool on horisontaalsel satiinipistel 0,375 mm, vertikaalsel 0,225 mm. Kui toode on raamis viltu või külili, muuda `--set stretch_angle=…`. Päris tikandi foto (EMTA 104 mm hark lina-seadetega) näitas, et haru tuli ~0,7 mm kitsam.
+
+**Niidi jämedus:** tavaline 40 wt (~0,35–0,4 mm), peen 60 wt (~0,25 mm) väikese kirja ja peente detailide jaoks, nõel 65/9. 60 wt korral on pisted tihedamad ja satiin kitsam: satiini reavahe × 0,7, täidise reavahe × 0,75, satiin vähemalt × 0,6, kompensatsioon × 0,7 (kanga väärtustest).
 
 Allikad: Ink/Stitch'i lähtekood (vaikeväärtused: reavahe 0,25, satiin 0,4, lühikesed pisted 0,25 mm / 15%, 4 nihet, alustikk 3 × reavahe). Tööstuslikud digiteerimisjuhendid (EmbroideryHoop, Embroidery Legacy, Forum fonts, mySewnet). StitchPilot (reavahe kanga järgi).
 

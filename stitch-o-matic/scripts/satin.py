@@ -14,6 +14,8 @@ OPTS = dict(
     short_dist=0.25,     # same-side needle points closer than this (inside of curves) ...
     short_inset=(0.15, 0.3),  # ... those stitches are shortened by these shares of the width, in turn
     pull_mm=0.0,         # widen columns by this many mm on each side (pull compensation)
+    stretch=0.0,         # stretchy fabric: compensation is (1 - s/2 .. 1 + s/2) x pull_mm, the most for
+    stretch_angle=0.0,   # ... stitches along the stretch direction (degrees; 0 = across the garment)
     min_width=1.0,       # columns narrower than this (mm, median) are widened to it (thin text, towel)
     max_widen=0.3,       # ... but by at most this much in all (mm): small text keeps its counters open
     pull_pct=0.0,        # widen columns by this % of their width (half on each side)
@@ -26,6 +28,16 @@ OPTS = dict(
     reach=1.5,           # stroke ending against another runs on at most this many widths
     gap_min=0.3,         # uncovered gaps at least this wide (mm) get a small fill
 )
+
+
+def pull_for(dx, dy):
+    """pull compensation for a stitch in direction (dx, dy): on a stretchy fabric (knit) the fabric gives
+    most along its stretch direction, so stitches lying that way are pulled in most"""
+    if not OPTS['stretch']: return OPTS['pull_mm']
+    l_ = math.hypot(dx, dy) or 1
+    a = math.radians(OPTS['stretch_angle'])
+    c = abs(dx / l_ * math.cos(a) + dy / l_ * math.sin(a))      # 1 along the stretch, 0 across it
+    return OPTS['pull_mm'] * (1 + OPTS['stretch'] * (c - 0.5))
 
 
 def _mask(poly):
@@ -333,7 +345,10 @@ def column_pairs(poly, line, spacing=0.4, width=None, caps=(False, False)):
     for i in range(n):
         d = L * i / (n - 1)
         p = ls.interpolate(d).coords[0]
-        p0 = ls.interpolate(max(0, d - 0.15)).coords[0]; p1 = ls.interpolate(min(L, d + 0.15)).coords[0]
+        # direction from the line over +-half a width: a kink in the centre line (where a branch joins)
+        # turns the stitches gradually instead of all at once, which would open a wedge on the outside
+        hw = max(0.15, 0.5 * (width or 0))
+        p0 = ls.interpolate(max(0, d - hw)).coords[0]; p1 = ls.interpolate(min(L, d + hw)).coords[0]
         tx, ty = p1[0] - p0[0], p1[1] - p0[1]; tl = math.hypot(tx, ty) or 1
         nrm, f = _turn(-ty / tl, tx / tl, d, corners, width, ends)
         allow.append(f)
@@ -377,8 +392,23 @@ def column_pairs(poly, line, spacing=0.4, width=None, caps=(False, False)):
         if b - a < 0.2: m_ = (a + b) / 2; a, b = m_ - 0.1, m_ + 0.1
         if b - a >= 0.8 * (mn + mp) / 1.12: last = (a, b)   # only full-width stitches are carried on
         if OPTS['pull_pct']: g = (b - a) * OPTS['pull_pct'] / 200; a, b = a - g, b + g
-        a, b = a - OPTS['pull_mm'] - extra, b + OPTS['pull_mm'] + extra
+        pm = pull_for(*nrm)
+        a, b = a - pm - extra, b + pm + extra
         dense.append(((p[0] + nrm[0] * a, p[1] + nrm[1] * a), (p[0] + nrm[0] * b, p[1] + nrm[1] * b)))
+    # no stitch reaches past the outline by more than the compensation: where the centre line runs on
+    # past the shape (sharp tips of M, N, W, A; ends that carry the last full width), a stitch is cut
+    # back to the outline + compensation instead of sticking out
+    allowed = poly.buffer(OPTS['pull_mm'] * (1 + OPTS['stretch'] / 2) + extra + 0.1, join_style=1)   # round: a mitre would spike out at sharp tips
+    for k, (l_, r_) in enumerate(dense):
+        if allowed.contains(Point(l_)) and allowed.contains(Point(r_)): continue
+        seg = LineString([l_, r_]); cut = seg.intersection(allowed)
+        parts_ = [g for g in getattr(cut, 'geoms', [cut]) if g.geom_type == 'LineString' and not g.is_empty]
+        if not parts_: continue
+        mid = samples[k][0]
+        g = min(parts_, key=lambda g_: g_.distance(Point(mid)))
+        c0, c1 = g.coords[0], g.coords[-1]
+        if math.dist(c0, l_) > math.dist(c1, l_): c0, c1 = c1, c0
+        dense[k] = (c0, c1)
     # free ends: the column runs on to the tip and every stitch is cut by the outline, so a square
     # or slanted end is filled with stitches getting shorter, parallel to the others (no fan)
     ok = [s_[2] is not None and s_[3] - s_[2] >= 0.25 for s_ in samples]

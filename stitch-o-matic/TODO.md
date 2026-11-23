@@ -50,3 +50,14 @@ Tikkimise võtted, mida `digitize.py` veel ei tee. Iga rea juures on, mis see on
 2. Teosta `digitize.py` funktsioonina, mis tuleb plaanist (`stitch` või uus võti); vaikimisi väljund ei tohi muutuda (regressioon).
 3. Proovifail: tehnika eraldi, paar suurust/seadet kõrvuti; tihedusekaart ja eeldatav välimus üle.
 4. PDF-i „Kuidas on tehtud“ lause ja vajadusel peatuse juhend.
+
+## Kattuvuse kontrolli leitud (testileht, 2026-11-22)
+
+D4 äärisega kolmnurga tipud ja E4 kontuuritäite keskkoht on parandatud (ALGORITHMS.md, Täidise erijuhud). Lahtiseks jäid:
+
+| Koht | Mis | Mõte |
+|---|---|---|
+| E1, A1 juuksenõela pöörded (150–160°) | jagatakse eraldi sammasteks, mis kattuvad; pöördes on näha suuna muutus | pöörde ümber lehvik (radiaalsed pisted) nagu kõveral |
+| E4 suur | kontuuritäite spiraali ringide vahetuskoht (õmblus) | ringide vahetus hajutada mööda ringi |
+| A2 | sirgpiste kurvil kuni ~0,15 mm joonest kõrval | lühem piste kõveral |
+| Suunaline kompensatsioon | eeldab, et toode on raamis sirge | küsida, kui pole |

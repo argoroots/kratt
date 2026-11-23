@@ -4,12 +4,13 @@ python3 preview.py "out/Nimi 150.pes" [--fabric "#f2efe8"] [--px 10 | --long 120
 
 Working pictures for checking (not for the user: the user gets the project PDF and the machine files).
 Writes to check/ (--dir):
-  <file>.thread.png    stitches drawn as thread (0.4 mm wide, thread colour, light from top left)
+  <file>.thread.png    stitches drawn as thread exactly where the file puts them (0.4 mm wide, thread colour)
+  <file>.look.png      expected look on the fabric: pulled in, pushed out, satin sheen, fabric texture (see look())
   <file>.density.png thread length per mm2 (smoothed over ~1 mm), 7 levels from green to red
   <file>.line.png    with --line: 400x400 line picture, only when the design goes into a collection
 Prints the share of the design on each level.
 """
-import argparse, math, os
+import argparse, json, math, os
 import pyembroidery as pe
 from PIL import Image, ImageDraw, ImageFont
 
@@ -81,6 +82,125 @@ def thread_picture(segs, box, px, fabric):
     return im
 
 
+
+# ---------- expected look on the fabric ----------
+# The file is not what lands on the fabric: satin and fill stitches pull the fabric in along the stitch
+# (that is why the file makes them longer by the pull compensation) and push it out along the column.
+# The look picture undoes that with the fabric's own numbers, so it shows the design after sewing:
+#   pull  per stitch end = comp x (1 + comp_stretch x (c - 0.5)), c = |cos| to the stretch direction;
+#         stitches under 1.5 mm pull in proportionally less; running stitches keep their length
+#   push  a satin column grows along its length by PUSH_K x comp at each end
+# These are estimates (comp is the expected pull), not measurements: a test sew-out decides.
+PUSH_K = 0.4
+KNIT = ('jersey', 'fleece', 'terry')
+WOVEN = ('linen', 'cotton', 'denim', 'canvas')
+
+
+def satin_columns(S):
+    """index lists: consecutive top stitches > 0.8 mm that go back and forth (each turns more than 120 deg)
+    to a new needle point; a stitch that goes back over the last one is a triple running stitch, not satin"""
+    import numpy as np
+    runs, cur = [], []
+    for i, (a, b, col, u) in enumerate(S):
+        v = np.subtract(b, a); ok = not u and math.hypot(*v) > 0.8
+        if ok and cur:
+            pa, pb = S[cur[-1]][0], S[cur[-1]][1]; w = np.subtract(pb, pa)
+            retrace = math.dist(a, pb) < 0.05 and math.dist(b, pa) < 0.05      # triple running stitch goes back over itself
+            if retrace or np.dot(v, w) / (math.hypot(*v) * math.hypot(*w)) >= -0.5:
+                if len(cur) > 3: runs.append(cur)
+                cur = []
+        if ok: cur.append(i)
+        else:
+            if len(cur) > 3: runs.append(cur)
+            cur = []
+    if len(cur) > 3: runs.append(cur)
+    return runs
+
+
+def settle(S, comp, stretch=0.0, angle=0.0, push_k=PUSH_K):
+    """[(a, b, colour, underlay?)] in mm -> the same stitches where they lie after sewing"""
+    import numpy as np
+    cols = satin_columns(S); sat = {i for r in cols for i in r}
+    out = [[np.array(a, float), np.array(b, float), c, u] for a, b, c, u in S]
+    ca, sa = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+    for i in sat:
+        a, b = out[i][0], out[i][1]; v = b - a; L = float(np.linalg.norm(v)); uv = v / L
+        k = abs(uv[0] * ca + uv[1] * sa)
+        pm = min(comp * (1 + stretch * (k - 0.5)) * min(1.0, L / 1.5), 0.3 * L)
+        out[i][0], out[i][1] = a + uv * pm, b - uv * pm
+    for run in cols:
+        mids = np.array([(out[i][0] + out[i][1]) / 2 for i in run])
+        dd = np.r_[0, np.cumsum(np.linalg.norm(np.diff(mids, axis=0), axis=1))]
+        if dd[-1] < 1: continue
+        for k, i in enumerate(run):
+            t = mids[min(len(run) - 1, k + 3)] - mids[max(0, k - 3)]; n = float(np.linalg.norm(t))
+            if n < 1e-6: continue
+            sh = t / n * push_k * comp * (2 * dd[k] / dd[-1] - 1)
+            out[i][0] = out[i][0] + sh; out[i][1] = out[i][1] + sh
+    return [(tuple(a), tuple(b), c, u) for a, b, c, u in out], sat
+
+
+def fabric_texture(W, H, px, colour, kind):
+    """knit: wales ~0.7 mm with V loops; woven: plain weave ~0.5 mm; others plain with slight noise"""
+    import numpy as np
+    from PIL import ImageFilter
+    base = np.array([int(colour[i:i + 2], 16) for i in (1, 3, 5)], float)
+    yy, xx = np.mgrid[0:H, 0:W] / px
+    noise = np.random.default_rng(1).normal(0, 0.008, (H, W))
+    if kind in KNIT:
+        v = np.abs((xx % 0.7) / 0.7 - 0.5) * 2
+        f = 1 - 0.035 * (0.5 + 0.5 * np.cos(2 * np.pi * (yy / 0.55 + 0.5 * v))) - 0.025 * v + noise
+    elif kind in WOVEN:
+        f = 1 - 0.03 * np.abs(np.sin(np.pi * xx / 0.5)) * (((xx // 0.5 + yy // 0.5) % 2) * 0.6 + 0.4) \
+              - 0.03 * np.abs(np.sin(np.pi * yy / 0.5)) * ((((xx // 0.5 + yy // 0.5) + 1) % 2) * 0.6 + 0.4) + noise
+    else:
+        f = 1 + noise
+    im = Image.fromarray((base[None, None, :] * f[..., None]).clip(0, 255).astype('uint8'))
+    return im.filter(ImageFilter.GaussianBlur(px * 0.05))
+
+
+def look(S, px, comp, stretch=0.0, angle=0.0, fabric='#f2efe8', kind='', margin=3):
+    """expected look: S = [(a, b, colour, underlay?)] in mm. Returns (image, x0, y0): the image's top left
+    corner in the stitches' mm coordinates"""
+    from PIL import ImageFilter
+    T, sat = settle(S, comp, stretch, angle)
+    xs = [q[0] for s in T for q in s[:2]]; ys = [q[1] for s in T for q in s[:2]]
+    x0, y0 = min(xs) - margin, min(ys) - margin
+    W, H = int((max(xs) - x0 + margin) * px), int((max(ys) - y0 + margin) * px)
+    tw = max(1, round(THREAD * px))
+    P = lambda q: ((q[0] - x0) * px, (q[1] - y0) * px)
+    shadow = Image.new('L', (W, H), 0); ds = ImageDraw.Draw(shadow); o = px * 0.12
+    for a, b, col, u in T:
+        A, B = P(a), P(b); ds.line([(A[0] + o, A[1] + o), (B[0] + o, B[1] + o)], fill=110, width=tw + 2)
+    im = fabric_texture(W, H, px, fabric, kind)
+    im.paste((40, 40, 50), (0, 0), shadow.filter(ImageFilter.GaussianBlur(px * 0.12)))
+    d = ImageDraw.Draw(im)
+    for i, (a, b, col, u) in enumerate(T):
+        A, B = P(a), P(b); L = math.dist(A, B)
+        if u: d.line([A, B], fill=shade(col, 0.6), width=tw); continue
+        if i not in sat or L < tw * 3:          # running stitch: even thread with a twist highlight
+            d.line([A, B], fill=shade(col, 0.92), width=tw)
+            d.line([A, B], fill=shade(col, 1.12), width=max(1, tw // 3)); continue
+        n = 14                                   # satin: dome, light on top, darker into the needle holes
+        for k in range(n):
+            t0, t1 = k / n, (k + 1) / n
+            f = 0.62 + 0.62 * math.sin(math.pi * (t0 + t1) / 2) ** 0.8
+            d.line([(A[0] + (B[0] - A[0]) * t0, A[1] + (B[1] - A[1]) * t0), (A[0] + (B[0] - A[0]) * t1, A[1] + (B[1] - A[1]) * t1)],
+                   fill=shade(col, f), width=tw)
+        nx, ny = -(B[1] - A[1]) / L, (B[0] - A[0]) / L; r = tw / 2      # fine groove to the next stitch
+        d.line([(A[0] + nx * r, A[1] + ny * r), (B[0] + nx * r, B[1] + ny * r)], fill=shade(col, 0.7), width=1)
+    return im, x0, y0
+
+
+def segments_under(p, fn):
+    """segments() with the underlay flag, read from outpos/<name>.under.json when there is one"""
+    base = os.path.splitext(fn)[0]
+    cand = [base + '.under.json', os.path.join(os.path.dirname(fn) or '.', '..', 'outpos', os.path.basename(base) + '.under.json')]
+    und = set()
+    for cf in cand:
+        if os.path.exists(cf): und = {(x / 10, y / 10) for x, y in json.load(open(cf))}; break
+    return [(a, b, c, a in und and b in und) for a, b, c in segments(p)]
+
 def line_picture(p, S=400, ss=3):
     """catalogue picture: stitch lines in thread colour on light grey, S x S (as the library previews)"""
     st = [(x, y) for x, y, c in p.stitches if (c & pe.COMMAND_MASK) == pe.STITCH]
@@ -149,11 +269,23 @@ def main():
     os.makedirs(a.dir, exist_ok=True)
     for fn in a.files:
         p = pe.read(fn); meta_colours(p, fn); segs = segments(p)
+        global THREAD
+        THREAD = 0.4
+        for mf in (os.path.join(os.path.dirname(fn) or '.', 'meta.json'), os.path.join(os.path.dirname(fn) or '.', '..', 'out', 'meta.json')):
+            try: THREAD = 0.28 if int(json.load(open(mf)).get('thread', 40)) == 60 else 0.4; break   # 60 wt is thinner
+            except (OSError, ValueError): pass
         xs = [q[0] for s in segs for q in s[:2]]; ys = [q[1] for s in segs for q in s[:2]]
         box = (min(xs), min(ys), max(xs), max(ys))
         base = os.path.join(a.dir, os.path.splitext(os.path.basename(fn))[0])
         px = a.long / max(box[2] - box[0], box[3] - box[1]) if a.long else a.px
         thread_picture(segs, box, px, a.fabric).save(base + '.thread.png', optimize=True)
+        mt = {}
+        for mf in (os.path.join(os.path.dirname(fn) or '.', 'meta.json'), os.path.join(os.path.dirname(fn) or '.', '..', 'out', 'meta.json')):
+            try: mt = json.load(open(mf)); break
+            except (OSError, ValueError): pass
+        pr = mt.get('params', {})
+        look(segments_under(p, fn), px, float(pr.get('comp', 0.2)), float(pr.get('comp_stretch', 0)), float(pr.get('stretch_angle', 0)),
+             a.fabric, mt.get('fabric', ''))[0].save(base + '.look.png', optimize=True)
         if a.line: line_picture(p).save(base + '.line.png')
         g, _, _ = density(segs, box)
         density_picture(g, 0.25, a.px).save(base + '.density.png')

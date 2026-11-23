@@ -16,9 +16,10 @@ Reeglid ja nende põhjused (kangas, tihedus, alustikk, suund, nurgad) on failis 
 
 ## 1. Küsi enne alustamist
 - **Masin:** Brother Innov-is V3, Janome Memory Craft 550E või mõlemad. Küsi masina, mitte faili järgi: vorming tuleb masinast.
-- **Suurused** (pikem külg mm). Iga suurus peab mahtuma valitud masina raami (`gen.py` hoiatab).
+- **Suurused** (pikem külg mm). Iga suurus peab mahtuma valitud masina raami (`gen.py` hoiatab). Küsi, kas suurus on tikandi tegelik mõõt (siis `--exact`: skaala kohendatakse, kuni pistete pikem külg on täpselt see, 0,05 mm piires) või pildi mõõt (vaikimisi; pisted tulevad kompensatsiooni võrra suuremad). Kasutajad mõtlevad tavaliselt tegelikku mõõtu.
+- **Niit:** tavaline 40 wt või peen 60 wt (`--thread 60`). Alla ~5 mm kirja korral soovita 60 wt (nõel 65/9): pisted tihedamad ja kitsamad, tähtede augud jäävad lahti. 60 wt fail ei sobi 40 wt niidiga.
 - **Kangas:** linane, puuvill, teksas, kanvas, trikoo, fliis, frotee, nahk, vinüül (`--fabric linen / cotton / denim / canvas / jersey / fleece / terry / leather / vinyl`, vt `KNOWLEDGE.md` jaotis 8). Kui see pole teada, küsi; ära oleta.
-- **Variandid** (nt ilma tekstita) on eraldi SVG-d. Küsi, kas variant peab olema samas mõõtkavas kui terve pilt (vt 2).
+- **Variandid** (nt ilma tekstita) on eraldi SVG-d. Küsi, kas variant peab olema samas mõõtkavas kui terve pilt (vt 2). Kui jah, tee kõigepealt terve pilt; `gen.py` trükib iga faili skaala (`scale … mm/unit`, ka `out/meta.json`), ja variant tehakse samade skaaladega: `--scales 0.568,0.856,1.143` (SVG-d peavad olema samas koordinaadistikus).
 - Töötav fail samale masinale (sellega võrdled), failide ja niitide nimed. Neid ära tuleta ise.
 - Näita pilti PNG-na ja oota kinnitust. Muuda ainult kasutaja nõusolekul. Kui valikul on hind (nt rohkem lõikeid), ütle see numbritega.
 
@@ -71,7 +72,7 @@ Tatami, satiini ja muude täidiste algoritmid samm-sammult: `ALGORITHMS.md`. Loe
 - **JEF:** keskpunktiga, lõiked lõikekäsuna (`{'trims': True}`), juurde `.bmp` eelvaade 400×400, taust (236,236,236).
 - **Nimed:** failinimes täpitähti pole, kuju `Nimi 102` (pikem külg mm, 3 kohta tühikuga). PDF-is on nimi täpitähtedega. Niidi nimi tuleb `--color "#rrggbb=Nimi"` kaudu, muidu jääb PDF-i ainult värvikood.
 - Mitu värvi: esmakordse ilmumise järjekorras, värvide vahel lõige ja värvivahetus.
-- `outpos/<fail>.under.json` (alustiku punktid PDF-i jaoks), `out/meta.json` (parameetrid, failid, värvid, kasutatud pistetüübid `kinds`, niidiplokkide värvid `blocks`, masina peatused `stops`). PES-i tagasi lugedes läheb korduva värvi plokkide värv segi, seega `preview.py` ja `pdfcad.py` võtavad värvi `blocks` järgi.
+- `outpos/<fail>.under.json` (alustiku punktid PDF-i ja kattuvuse jaoks), `outpos/<fail>.shapes.json` (kujundite nähtav ala, kattuvuse jaoks), `out/meta.json` (parameetrid, failid, värvid, kasutatud pistetüübid `kinds`, niidiplokkide värvid `blocks`, masina peatused `stops`). PES-i tagasi lugedes läheb korduva värvi plokkide värv segi, seega `preview.py` ja `pdfcad.py` võtavad värvi `blocks` järgi.
 - Rohkem tehnikaid, mida veel pole: `TODO.md`.
 
 ## 5. Kontroll
@@ -80,16 +81,17 @@ Tatami, satiini ja muude täidiste algoritmid samm-sammult: `ALGORITHMS.md`. Loe
 - Täidises pole kolmnurki (kaks > 1,5 mm pistet vastassuunas ilma astmeta). Pisted on kuni 0,3 mm kujundi servast väljas (kompensatsioon). Read on ühtlased, sama kujundi osad sama suuna ja tihedusega.
 - Vaata pisteid suurendusega koos kontuuriga: täidise servad, satiini otsad, läbivate joonte otsad (sama kaugel kui risti oleva samba serv), ristumised, kinnitused.
 - `preview.py`: tihedusekaart (7 taset, vt 7). Oranžid ja punased kohad vaata üle ja ütle kasutajale numbritega.
+- **Kattuvus ja üle serva** (`coverage.py`, käivitub ise `gen.py` ja `check.py` sees). Kattuvus: iga pealmine piste joonistatakse niidi laiusena (40 wt 0,35 mm, 60 wt 0,25 mm) (alustikku ei arvestata, see jääb pealmise alla) ja võrreldakse kujunditega (0,25 mm servast sissepoole). Katmata koht, kuhu mahub ≥ 0,25 mm ring, annab `WARNING: … uncovered spot(s): <suurus> mm at x …, y …` (mm PES-i vasakust ülanurgast). Nii leitakse praod satiinisammaste vahel, kiilud seal, kus pisted pööravad liiga järsku, ja vahed täidise osade vahel. Hoiatusega faili ei anta kasutajale enne, kui põhjus on leitud ja parandatud või kasutajale numbritega öeldud. `python3 coverage.py outpos/*.pes` joonistab ka `check/<fail>.holes.png` (kaetud hall, augud punased). Silmaga eelvaatest seda ei leia: 105 mm hargi 0,5 mm kiil jäi väikesel pildil märkamata. Kõrvuti kujundid kontrollitakse koos, nii et ka nende vaheline pragu tuleb välja. Üle serva: iga pealmine nõelapiste mõõdetakse lähimast kujundist (joon koos laiusega); kaugemal kui kompensatsioon (venival kangal suurim suunaline) + õhukese satiini laiendus + 0,3 mm annab `WARNING: … place(s) over the edge: <kaugus> mm at x …, y …`. Ristpiste ruudud võivad kujundist välja ulatuda ühe ruudu võrra (see on lubatud). Pildil on üle serva kohad sinised.
 
 ## 6. Kontrollpildid (ainult enda jaoks)
 Kasutaja saab **ainult tikkimisfailid ja projekti PDF-i** (7). Pilte talle ei anta; kui ta tahab tulemust näha, saada PDF.
-- `preview.py out/*.pes --long 1200` → `check/<fail>.thread.png` (eeldatav välimus, nagu PDF-is) ja `check/<fail>.density.png` (tihedusekaart) ning tiheduse tasemed protsentidena. Vaata need enne PDF-i üle.
+- `preview.py out/*.pes --long 1200` → `check/<fail>.thread.png` (pisted täpselt nagu failis), `check/<fail>.look.png` (eeldatav välimus, nagu PDF-is) ja `check/<fail>.density.png` (tihedusekaart) ning tiheduse tasemed protsentidena. Vaata need enne PDF-i üle.
 - `--line` → `check/<fail>.line.png` (400×400 joonepilt niidi värvis helehallil taustal) ainult siis, kui tikand lisatakse kogusse (`tikandikogu` skill).
 
 ## 7. PDF (`pdfcad.py` → `<Nimi> - Projekt.pdf`)
 - **Esileht (A4 püsti):** pealkiri; failide tabel (lehed, fail, mõõdud, pisted, lõiked); värvitabel (originaal, Brother, Janome värvinäidistega); „Kuidas on tehtud“ ainult kasutatud pistetüüpide ja vormingute kohta; „Kuidas testida“ + proovitabel; märkus alaservas (1 : 1, prindi 100 %, mõõtjoonlaud 50 mm). Mahub ühele lehele.
 - **Joonised (A4 rõhtsalt), iga suuruse kohta 3 lehte, kõik 1:1, CAD-stiilis** (topeltraam, tsoonimärgid, pealkirjaplokk koos JOONIS-reaga, mõõtjooned, telgjooned, mõõtjoonlaud):
-  1. *Eeldatav välimus:* kanga taustal niit 0,4 mm, ümarad otsad, tumedam serv ja hele läige, tikkimise järjekorras (kanga värv: keskkonnamuutuja `FABRIC`).
+  1. *Eeldatav välimus:* tikand pärast tikkimist (`preview.look`): satiinipisted tõmbuvad otstest kompensatsiooni võrra sisse (kangal venivam suund rohkem, alla 1,5 mm pisted vähem), satiinisammas pikeneb otstest 0,4 × kompensatsioon, satiin kumer (keskelt hele, otstest tume), sirgpiste jääb pidevaks; kanga tekstuur kanga järgi (trikotaaž silmused, lina/puuvill riie), kanga värv keskkonnamuutujast `FABRIC`. See on hinnang: kompensatsiooni arv on eeldatav tõmme, tegeliku näitab proov. Fail ise (pisted enne tõmmet) on `check/<fail>.thread.png`.
   2. *Pistete käik:* alustikk helesinine ja peenike; pealmised pisted järjekorras, igaüks valge äärisega, nii et pealmine jääb nähtavalt peale.
   3. *Niidi tihedus:* niiti mm/mm², silutud ~1 mm alale, 7 taset rohelisest punaseni (`preview.LEVELS`). Tavaline on 4–7; üle 8,5 kuhjuvad kihid.
 
@@ -99,6 +101,7 @@ Kasutaja saab **ainult tikkimisfailid ja projekti PDF-i** (7). Pilte talle ei an
 ## 9. Proov
 - Kui väärtus pole selge (tihedus, kompensatsioon, nurk), tee proovileht: `swatch.py --vary nimi=v1,v2,…` paneb sama kujundi mitu korda ühte faili, iga variandi alla number. Numbrid ja väärtused on failis `out/<Nimi>.txt`. Raskemad kujundid samas mõõtkavas: `--only 10,11,0 --size <terve mustri suurus>`. Küsi, milline number on parim.
 - Masinas: kontrolli suurust, tee raami jälgimine, kasuta jäägitükki, sobivat tugimaterjali ja uut nõela 75/11. Pärast proovi küsi fail, kangas ja tugimaterjal.
+- **Foto tikitud tulemusest** (`photo_check.py foto.jpg "outpos/<fail>.pes" [--box x0,y0,x1,y1]`): niit leitakse fotolt värvi järgi, joondatakse failiga (nihe, pööre, mõõtkava) ja võrreldakse. Annab protsendi, kui palju oodatud niidist fotol on, ning kohad (mm faili vasakust ülanurgast), kus niiti on puudu (pragu, kangas tõmbas sisse, osa jäi tikkimata) või üle (kuju venis, pisted üle serva). Pilt `check/photo.png`: punane puudu, sinine üle. `--box` siis, kui fotol on mitu tikandit. Foto otse pealt, kangas raamis sirge; nurga all, varjus või kangaga sarnase niidi korral on tulemus ligikaudne: need on kohad, mida vaadata, mitte mõõtmine. Näide: EMTA 104 mm hark T-särgil (lina-seadetega fail) – vasak haru oli ~0,7 mm kitsam kui failis, st kangas tõmbas sisse → trikoo seaded (suurem ja suunaline kompensatsioon).
 
 | Proovil näed | Muuda |
 |---|---|
@@ -128,8 +131,10 @@ Pärast iga parandust tee kõik suurused uuesti, käivita kontroll ning uuenda P
 | `satin.py` | satiin (skelett, sambad, nurgad, otsad, järjekord) |
 | `gen.py` | kõik suurused → `out/` (PES, JEF, BMP, `meta.json`) |
 | `pes10.py` | PES v6 → v10 töötava faili päisega |
-| `check.py` | kontroll |
-| `preview.py` | kontrollpildid kausta `check/`: niidipilt `.thread.png` (`--long 1200`), tihedusekaart `.density.png`, joonepilt `.line.png` (`--line`) |
+| `check.py` | kontroll (koos kattuvusega, kui `outpos/<fail>.shapes.json` on olemas) |
+| `coverage.py` | kattuvus ja üle serva: katmata kohad ja liiga kaugele ulatuvad pisted, pilt `check/<fail>.holes.png` |
+| `photo_check.py` | foto tikitud tulemusest vs fail: puudu/üle kohad mm-des, pilt `check/photo.png` |
+| `preview.py` | kontrollpildid kausta `check/`: niidipilt `.thread.png` (`--long 1200`), eeldatav välimus `.look.png`, tihedusekaart `.density.png`, joonepilt `.line.png` (`--line`) |
 | `swatch.py` | proovileht; `--list` kujundite numbrid, reeglite valik ja tehnikate ettepanekud |
 | `optimize.py` | proovib kujundite variandid läbi → `plan.json` |
 | `pdfcad.py` | `<Nimi> - Projekt.pdf` `out/meta.json` põhjal |
@@ -139,7 +144,7 @@ Käivitus töökaustas (skriptid sinna kopeeritud):
 ```
 python3 swatch.py pilt.svg --size 200 --list
 python3 optimize.py pilt.svg --size 150 --ref-size 200 --fabric linen --angle 45 [--plan plan.json] --out plan.json
-python3 gen.py pilt.svg --name "Nimi" --sizes 100,150,200 --machines brother,janome --working toimiv.pes \
+python3 gen.py pilt.svg --name "Nimi" --sizes 100,150,200 [--exact] [--thread 60] --machines brother,janome --working toimiv.pes \
     --color "#rrggbb=Niidi nimi" --fabric linen --plan plan.json [--angle 45] [--background "#ffffff"] [--set nimi=väärtus]
 python3 check.py out/*.pes out/*.jef
 python3 preview.py out/*.pes --long 1200

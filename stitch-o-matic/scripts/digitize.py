@@ -188,6 +188,10 @@ DEFAULTS = dict(
     satin_max=2.8,      # wider shapes (2*area/perimeter, mm) get tatami instead of satin
     run_passes=3,       # thin strokes: running stitch passes
     run_step=2.0,       # running stitch length, mm
+    thread_mm=0.35,     # thread width drawn in the coverage check (40 wt; 60 wt: 0.25, see THREADS)
+    comp_stretch=0.0,   # stretchy fabric: compensation varies with stitch direction, comp x (1 -/+ s/2);
+    stretch_angle=0.0,  # ... most along this direction (degrees in the design; 0 = across, as a T-shirt front
+                        # hooped straight: knit stretches most along its courses)
     run_tol=0.1,        # running stitch may stray at most this far from a curved path, mm
     stroke_as_fill=0.8, # strokes at least this wide (mm) are stitched as shapes
     overlap=0.3,        # colour overlap under the shape on top, mm
@@ -257,13 +261,29 @@ def suggest(g, c=None):
 FILL_STITCHES = ('satin', 'tatami', 'contour', 'applique', 'cross')   # plan "stitch" values for shapes
 
 # starting points per fabric (KNOWLEDGE.md, section 8); everything else stays at DEFAULTS
+# thread weight: 40 wt is the normal embroidery thread (all settings above are for it). 60 wt is
+# thinner (about 0.25 mm): for small text (< 4-5 mm) and fine detail, with a 65/9 needle. Settings
+# scale from the fabric's 40 wt values; `thread_mm` is the drawn width in the coverage check.
+THREADS = {
+    40: dict(scale=dict(), thread_mm=0.35),
+    60: dict(scale=dict(satin_spacing=0.7, fill_spacing=0.75, satin_min=0.6, satin_widen_max=0.6, comp=0.7, run_step=0.75), thread_mm=0.25),
+}
+
+def thread_cfg(cfg, weight):
+    """settings for a thread weight, starting from cfg (fabric + user settings)"""
+    t = THREADS[int(weight)]; c = dict(DEFAULTS, **cfg)
+    out = dict(cfg)
+    for k, f in t['scale'].items(): out[k] = round(float(c[k]) * f, 3)
+    out['thread_mm'] = t['thread_mm']
+    return out
+
 FABRICS = {
     'linen':   dict(),
     'cotton':  dict(),
     'denim':   dict(fill_spacing=0.4, comp=0.15),
     'canvas':  dict(fill_spacing=0.4, comp=0.15),
-    'jersey':  dict(fill_spacing=0.4, satin_spacing=0.45, comp=0.30, fill_under_spacing=0.75, satin_min=1.2),
-    'fleece':  dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
+    'jersey':  dict(fill_spacing=0.4, satin_spacing=0.45, comp=0.30, comp_stretch=0.5, fill_under_spacing=0.75, satin_min=1.2),
+    'fleece':  dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, comp_stretch=0.3, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
     'terry':   dict(fill_spacing=0.4, satin_spacing=0.4, comp=0.25, fill_under_spacing=0.75, satin_min=1.5, satin_contour_from=1.5, satin_german_from=3.0),
     'leather': dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
     'vinyl':   dict(fill_spacing=0.5, satin_spacing=0.45, comp=0.12, fill_under_spacing=0, satin_min=1.2),
@@ -282,7 +302,7 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     c = dict(DEFAULTS, **(cfg or {}))
     STAGGERS = max(1, int(c['fill_staggers']))
     def set_satin(c):
-        SAT.OPTS.update(pull_mm=float(c['comp']), pull_pct=float(c['satin_pull_pct']), push_mm=float(c['satin_push']),
+        SAT.OPTS.update(pull_mm=float(c['comp']), stretch=float(c['comp_stretch']), stretch_angle=float(c['stretch_angle']), pull_pct=float(c['satin_pull_pct']), push_mm=float(c['satin_push']),
                         short_dist=float(c['satin_short']), split_len=float(c['satin_split']), mitre_max=float(c['satin_mitre']), reach=float(c['satin_reach']), gap_min=float(c['satin_gap']), min_width=float(c['satin_min']), max_widen=float(c['satin_widen_max']),
                         contour_from=float(c['satin_contour_from']), german_from=float(c['satin_german_from']),
                         underlay=c.get('underlay'))
@@ -367,6 +387,22 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
         full = p
         if c['fill_border'] > 0:                                 # fill goes 0.3 mm under the border
             p = p.buffer(-(c['fill_border'] - 0.3), join_style=2)
+            # sharp tips (< 60 deg): the border's corner stitch may be at most twice the column's
+            # half width, so it stops short of the tip; the fill runs out to the tip there instead
+            from shapely.ops import unary_union
+            hw = c['fill_border'] / 2; tips = []
+            for q in polys(full):
+                pts = list(q.exterior.coords)[:-1]
+                for i, v in enumerate(pts):
+                    a, b = pts[i - 1], pts[(i + 1) % len(pts)]
+                    u1 = (a[0] - v[0], a[1] - v[1]); u2 = (b[0] - v[0], b[1] - v[1])
+                    l1, l2 = math.hypot(*u1), math.hypot(*u2)
+                    if l1 < 1e-6 or l2 < 1e-6: continue
+                    th = math.acos(max(-1, min(1, (u1[0] * u2[0] + u1[1] * u2[1]) / l1 / l2)))
+                    if th < math.radians(60) and q.buffer(-0.05).contains(Point(v[0] + (u1[0] / l1 + u2[0] / l2) * 0.1, v[1] + (u1[1] / l1 + u2[1] / l2) * 0.1)):
+                        r = hw / math.sin(th / 2) - 2 * hw + 0.4          # part of the tip the border cannot reach
+                        tips.append(q.intersection(Point(v).buffer(r)))
+            if tips: p = unary_union([p] + tips)
             if p.is_empty: p = full
         for q in polys(p.buffer(-0.35)):                         # edge underlay
             rr = run(list(q.exterior.coords), 1, 2.0); stitch_block(rr, under=(0, len(rr)))
@@ -375,7 +411,8 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
                 if cur[0] is not None and math.dist(cur[0], blk[0]) > 0.6: blk = travel_path(cur[0], blk[0], p)[1:-1] + blk
                 stitch_block(blk, connect=True, under=(0, len(blk)))
         global ROWCOMP
-        ROWCOMP = c['comp']                                       # top rows only: longer by comp at both ends
+        SAT.OPTS.update(pull_mm=float(c['comp']), stretch=float(c['comp_stretch']), stretch_angle=float(c['stretch_angle']))
+        ROWCOMP = SAT.pull_for(math.cos(math.radians(c['fill_angle'])), math.sin(math.radians(c['fill_angle'])))   # top rows only: longer at both ends, by comp along the rows' direction
         top = ordered_fill(p, c['fill_angle'], c['fill_spacing'], c['fill_maxlen'], cur[0], down=True)
         ROWCOMP = 0.0
         for k, blk in enumerate(top):
@@ -398,6 +435,17 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
             stitch_block(pts, connect=near)
         tie_off()
         KINDS.add('outline')
+
+    def border_band(p, c=c, w=None):
+        """area the border satin covers (outline rings, w wide, centre line as in border())"""
+        from shapely.ops import unary_union
+        w = w or c['fill_border']; out = []
+        for q in polys(p):
+            for k, ring in enumerate([q.exterior] + list(q.interiors)):
+                rp = Polygon(ring)
+                mid = rp.buffer(-w / 2, join_style=1) if k == 0 else rp.buffer(w / 2, join_style=1)
+                out += [m.exterior.buffer(w / 2 + 0.01, cap_style=2, join_style=2) for m in polys(mid)]
+        return unary_union(out) if out else Polygon()
 
     def border(p, c=c, w=None):
         """satin border along every outline ring: outer edge = outline + comp, inner edge w inside"""
@@ -451,6 +499,31 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
                 stitch_block(pts, connect=not first and cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
                 first = False
             i += 1
+        # the middle: the last ring leaves an opening up to one row spacing wide (an ellipse leaves a
+        # slot along its long axis); a running stitch down the middle of that opening closes it
+        if levels:
+            for q in levels[-1]:
+                if list(q.interiors): continue                      # a ring (shape with a hole) ends in a ring, no middle
+                core = q.buffer(-sp / 2)
+                if core.is_empty: core = q
+                rr = core.minimum_rotated_rectangle
+                xy = list(rr.exterior.coords)[:4]
+                e1 = (xy[0], xy[1]); e2 = (xy[1], xy[2])
+                lng, sht = (e1, e2) if math.dist(*e1) >= math.dist(*e2) else (e2, e1)
+                half = ((sht[1][0] - sht[0][0]) / 2, (sht[1][1] - sht[0][1]) / 2)
+                a_ = (lng[0][0] + half[0], lng[0][1] + half[1]); b_ = (lng[1][0] + half[0], lng[1][1] + half[1])
+                # run on along the axis to where the rings' pointed ends still stand apart (3 rings out)
+                outer = [g for g in levels[max(0, len(levels) - 4)] if g.intersects(q)]
+                reach = outer[0].buffer(-sp / 2) if outer else q
+                ext = 0.5 * max(reach.bounds[2] - reach.bounds[0], reach.bounds[3] - reach.bounds[1])
+                dx_, dy_ = b_[0] - a_[0], b_[1] - a_[1]; dl = math.hypot(dx_, dy_) or 1
+                a_ = (a_[0] - dx_ / dl * ext, a_[1] - dy_ / dl * ext); b_ = (b_[0] + dx_ / dl * ext, b_[1] + dy_ / dl * ext)
+                mid_line = LineString([a_, b_]).intersection(reach if not reach.is_empty else q)
+                if mid_line.is_empty or mid_line.length < 0.3: continue
+                ml = max(getattr(mid_line, 'geoms', [mid_line]), key=lambda g: g.length)
+                pts = list(ml.coords)
+                if cur[0] is not None and math.dist(cur[0], pts[-1]) < math.dist(cur[0], pts[0]): pts = pts[::-1]
+                stitch_block(run(pts, 1, c['fill_maxlen'] / 2), connect=cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
         tie_off()
         if c['fill_outline'] > 0: outline(p, c)
         if c['fill_border'] > 0: border(p, c)
@@ -626,4 +699,15 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
     pat.kinds = sorted(KINDS)                        # stitch types used: run, satin, tatami, contour, applique, cross, border
     pat.stops = STOPS                                # machine stops inside a colour (appliqué), in order          # shape in pattern units = SVG * scale_mm * 10 + offset
     pat.underlay = [(round(x * 10 + tx), round(y * 10 + ty)) for x, y in UL]
+    # visible area of every filled shape, in pattern units: for the coverage check (coverage.py)
+    # (fills: the coverage target is satin, tatami and contour; every element bounds where stitches may go)
+    def margin(e):    # how far this stitch type may reach past the shape by design (mm)
+        st_ = e.get('stitch')
+        if st_ == 'cross': return float({**c, **e['cfg']}.get('cross_size', 2.0))          # whole grid squares
+        return 0.0
+    pat.shapes = [dict(id=e['id'], kind=e['kind'], stitch=e.get('stitch', e['kind']), width=e.get('width', 0) * s, margin=margin(e),
+                       geom=affinity.affine_transform(e['geom'], [10, 0, 0, 10, tx, ty]))
+                  for e in els if not e['geom'].is_empty]
+    pat.comp = float(c['comp']) * (1 + float(c['comp_stretch']) / 2) + float(c['satin_widen_max']) / 2
+    pat.thread_mm = float(c['thread_mm'])    # how far stitches may reach out: compensation + widening of thin satin
     return pat

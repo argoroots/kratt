@@ -19,6 +19,14 @@ FMT = ('Brother ' + META['format'] + (' + Janome JEF' if META.get('jef') else ''
 COLS = META['colors']
 DATE = datetime.date.fromisoformat(META['date']).strftime('%d.%m.%Y')
 PR = META['params']
+# outline passes: global setting, or the largest per-shape value from the plan
+OUTLINE_N = int(PR.get('fill_outline') or 0)
+if not OUTLINE_N and META.get('plan'):
+    try:
+        OUTLINE_N = max([int(v.get('fill_outline', 0)) for v in json.load(open(META['plan'])).get('shapes', {}).values()] + [0])
+    except (OSError, ValueError):
+        pass
+OUTLINE_N = OUTLINE_N or 1
 KIND = set(META.get('kinds') or ['run', 'satin', 'tatami'])   # older meta.json: say everything
 num = lambda v: (f'{v:.2f}'.rstrip('0').rstrip('.') if isinstance(v, float) else str(v)).replace('.', ',')
 INK = HexColor('#1a1a1a'); GREY = HexColor('#8a8a8a'); LIGHT = HexColor('#d0d0d0')
@@ -97,20 +105,22 @@ def cover(c):
              Paragraph(f'Nimi masinas: {labels}.', sm),
              Paragraph('Värvid', h2), col_t,
              Paragraph('Kuidas on tehtud', h2),
-             *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige." + (f" Kangas: {FABRIC_ET.get(META['fabric'], META['fabric'])}." if META.get('fabric') else ''))] if 'tatami' in KIND else []),
+             *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige.")] if 'tatami' in KIND else []),
              *([B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm, alustikk laiuse järgi (kitsal keskjoon, laiemal servad); sama kuju tikitakse alati ühtemoodi.")] if 'satin' in KIND else []),
              *([B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste.")] if 'run' in KIND else []),
              *([B(f"Ääris: täidise serval satiinriba {num(PR.get('fill_border', 0) or PR.get('applique_border', 3))} mm, nurgad pöördega; varjab täidise serva ja tõmbe.")] if 'border' in KIND else []),
-             *([B(f"Serv: pärast täidist {int(PR.get('fill_outline', 1))}× sirgpiste mööda serva; teeb serva teravaks ja peidab ridade otsad.")] if 'outline' in KIND else []),
+             *([B(f"Serv: kujundi peale {OUTLINE_N}× sirgpiste mööda serva; teeb serva teravaks ja peidab ridade otsad.")] if 'outline' in KIND else []),
+             *([B(f"Kangas: {FABRIC_ET.get(META['fabric'], META['fabric'])}; tugimaterjal: {STABILIZER_ET.get(META['fabric'], 'rebitav või lõigatav')}.")] if META.get('fabric') else []),
+             *([B("Niit: 60 wt (peenem kui tavaline 40 wt), nõel 65/9; pisted tihedamad ja kitsamad, et väike kiri jääks lahti. 40 wt niidiga see fail ei sobi.")] if int(META.get('thread', 40)) == 60 else []),
              *([B(f"Kontuuritäide: read käivad kujundi servaga paralleelselt, reavahe {num(PR['fill_spacing'])} mm, üks pidev spiraal (ilma õmbluseta).")] if 'contour' in KIND else []),
              *([B(f"Ristpiste: ruut {num(PR.get('cross_size', 2.0))} mm, ruudustik ühine kogu tikandil; rist = kaks diagonaali.")] if 'cross' in KIND else []),
              *([B("Aplikatsioon: masin peatub 2 korda – (1) pärast paigutusjoont: aseta kangatükk joone peale; (2) pärast kinnitusjoont: lõika kangas joone lähedalt ära, siis ääris. Peatus näeb välja nagu värvivahetus sama niidiga.")] if 'applique' in KIND else []),
              B(f"Tõmbekompensatsioon {num(PR['comp'])} mm piste suunas (tatami read pikemad, satiin laiem). Kinnitus niidilõike ees ja järel."),
              B(('PES: nullpunkt mustri vasakus ülanurgas.' if META['format'] else '') + (' JEF: keskpunktiga.' if META.get('jef') else '')),
-             B('Iga suuruse kohta 3 joonist: <b>eeldatav välimus</b> (niit 0,4 mm laiune, otsad ümarad), <b>pistete käik</b> (alustikk helesinine; hilisem piste on valge äärisega ja jääb peale) ja <b>niidi tihedus</b> (roheline õhuke … punane liiga paks; kollased ja punased kohad vaata proovil üle).'),
+             B(f"Iga suuruse kohta 3 joonist: <b>eeldatav välimus</b> (pärast tikkimist: kangas tõmbab satiinipistete otsi umbes {num(PR['comp'])} mm sisse ja lükkab sambaid veidi pikemaks – hinnang, tegeliku näitab proov), <b>pistete käik</b> (alustikk helesinine; hilisem piste on valge äärisega ja jääb peale) ja <b>niidi tihedus</b> (roheline õhuke … punane liiga paks; kollased ja punased kohad vaata proovil üle)."),
              Paragraph('Kuidas testida', h2),
              B('Masinas: kontrolli suurust ja raami, tee jälgimine (trace).'),
-             B('Tiki jäägile: sama kangas, rebitav või lõigatav tugimaterjal, uus tikkimisnõel 75/11.'),
+             B(f"Tiki jäägile: sama kangas, tugimaterjal {STABILIZER_ET.get(META.get('fabric'), 'rebitav või lõigatav')}, uus tikkimisnõel {'65/9' if int(META.get('thread', 40)) == 60 else '75/11'}."),
              B('Jälgi tikkimist; terava heli või niidi katkemise korral peata ja märgi koht. Võrdle tulemust 1:1 joonisega.'),
              Spacer(1, 3), test_t]
     disc = Paragraph('<b>Märkus.</b> Joonised on mõõtkavas 1 : 1: prindi 100 % (mitte „Fit to page“), mõõtjoonlaud = 50 mm. Mõõdud on pistete äärmiste punktide järgi, telgjooned = raami kese. Tee enne kasutamist proovitikkimine.', ParagraphStyle('d', parent=sm, textColor=GREY))
@@ -154,6 +164,9 @@ def dim_v(c, y1, y2, xref, xdim, text):
 LEVEL_LABELS_ET = ['alla 2', '2–4', '4–5,5', '5,5–7', '7–8,5', '8,5–10', 'üle 10']
 FABRIC_ET = {'linen': 'linane', 'cotton': 'puuvill', 'denim': 'teksas', 'canvas': 'kanvas', 'jersey': 'trikoo',
              'fleece': 'fliis', 'terry': 'frotee', 'leather': 'nahk', 'vinyl': 'vinüül'}
+STABILIZER_ET = {'linen': 'rebitav', 'cotton': 'rebitav', 'denim': 'rebitav', 'canvas': 'rebitav',
+                 'jersey': 'lõigatav + kinnitus', 'fleece': 'lõigatav, peale vees lahustuv kile',
+                 'terry': 'lõigatav, peale vees lahustuv kile', 'leather': 'rebitav', 'vinyl': 'rebitav'}
 KINDS = {'appearance': 'EELDATAV VÄLIMUS', 'stitches': 'PISTETE KÄIK', 'density': 'NIIDI TIHEDUS'}   # page order
 
 
@@ -185,20 +198,19 @@ def _shade(hx, f):
 
 
 def draw_look(c, d, P, X0, Y1, w, h):
-    """thread as it lies on fabric: 0.4 mm wide, rounded where it goes into the fabric,
-    darker edge and a light sheen line; drawn in sewing order (later threads on top)"""
+    """expected look on the fabric (preview.look): stitches where they lie after the fabric pulled in and
+    pushed out, satin sheen, fabric texture; drawn as a picture at 16 px/mm"""
+    import preview
+    from reportlab.lib.utils import ImageReader
     c.setFillColor(HexColor(FABRIC)); c.rect(X0 - 3 * mm, Y1 - h - 3 * mm, w + 6 * mm, h + 6 * mm, stroke=0, fill=1)
-    c.setLineCap(1); c.setLineJoin(1)
-    sh = {}
-    for q0, q1, ci, u in segs_of(d):
-        hx = COLS[ci]['hex']
-        if hx not in sh: sh[hx] = (_shade(hx, 0.6), HexColor(hx), _shade(hx, 1.35))
-        dark, mid, light = sh[hx]
-        A, B = P(*q0), P(*q1)
-        c.setStrokeColor(dark); c.setLineWidth(0.44 * mm); c.line(*A, *B)
-        c.setStrokeColor(mid); c.setLineWidth(0.34 * mm); c.line(*A, *B)
-        if math.dist(A, B) > 0.5 * mm:
-            c.setStrokeColor(light); c.setLineWidth(0.09 * mm); c.line(*A, *B)
+    preview.THREAD = 0.28 if int(META.get('thread', 40)) == 60 else 0.4
+    S = [(q0, q1, COLS[ci]['hex'], u) for q0, q1, ci, u in segs_of(d)]
+    px = 16
+    im, x0, y0 = preview.look(S, px, float(PR.get('comp', 0.2)), float(PR.get('comp_stretch', 0)), float(PR.get('stretch_angle', 0)),
+                              FABRIC, META.get('fabric', ''), margin=2)
+    buf = io.BytesIO(); im.save(buf, 'JPEG', quality=88); buf.seek(0)     # JPEG: a raster of this size as PNG would make the PDF megabytes
+    c.drawImage(ImageReader(buf), X0 + (x0 - d['x0']) * mm, Y1 - (y0 - d['y0']) * mm - im.height / px * mm,
+                im.width / px * mm, im.height / px * mm)
 
 
 def draw_density(c, d, X0, Y1, ax0, ax1, ay0):
