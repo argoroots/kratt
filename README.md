@@ -2,6 +2,10 @@
 
 Claude'i oskused (skills). Vaata ka [kratt.roots.ee](https://kratt.roots.ee).
 
+## Rahapada
+
+Isiklik rahaasjade töölaud sinu pangakannetest: näed, kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad.
+
 ## STITCH-O-MATIC
 
 Teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.
@@ -19,6 +23,7 @@ Korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtse
 Kopeeri see käsk Claude'ile või oma agendile:
 
 ```
+Paigalda kratt.roots.ee/rahapada
 Paigalda kratt.roots.ee/stitch-o-matic
 Paigalda kratt.roots.ee/tikand-entusse
 Paigalda kratt.roots.ee/tikandikogu

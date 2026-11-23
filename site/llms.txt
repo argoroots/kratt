@@ -1,11 +1,12 @@
 # Kratt
 
-> Claude'i oskused (skills) masintikkimiseks, autor Argo Roots. Kolm oskust: STITCH-O-MATIC, Tikand Entusse ja Tikandikogu. Lähtekood: https://github.com/argoroots/kratt (CC BY-NC-SA 4.0).
+> Claude'i oskused (skills), autor Argo Roots. Neli oskust: Rahapada rahaasjade jaoks ning STITCH-O-MATIC, Tikand Entusse ja Tikandikogu masintikkimiseks. Lähtekood: https://github.com/argoroots/kratt (CC BY-NC-SA 4.0).
 
 ## Juhis agendile
 
 Kui kasutaja palub Kratti paigaldada (nt „Paigalda kratt.roots.ee“) ega nimeta, millist oskust, küsi temalt, milliseid oskusi ta tahab – üks, mitu või kõik:
 
+- **Rahapada** – isiklik rahaasjade töölaud sinu pangakannetest: näed, kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad. Kanded tulevad panga ühendusest (nt LHV) või väljavõtte failist.
 - **STITCH-O-MATIC** – teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.
 - **Tikand Entusse** – viib valmis tikandi koos failide ja eelvaatega kasutaja Entu andmebaasi, loob vajadusel tikandite objektitüübi ja kontrollib üleslaadimist. Vajab Claude'is Entu ühendust.
 - **Tikandikogu** – korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.
@@ -14,12 +15,14 @@ Kui kasutaja on valinud, ava iga valitud oskuse paigalduslehekülg allpool ja j�
 
 ## Paigaldamine
 
+- [Rahapada](https://kratt.roots.ee/rahapada): paigaldusjuhend
 - [STITCH-O-MATIC](https://kratt.roots.ee/stitch-o-matic): paigaldusjuhend
 - [Tikand Entusse](https://kratt.roots.ee/tikand-entusse): paigaldusjuhend, sh Entu ühendus
 - [Tikandikogu](https://kratt.roots.ee/tikandikogu): paigaldusjuhend
 
 ## Failid
 
+- [rahapada.zip](https://kratt.roots.ee/rahapada.zip)
 - [stitch-o-matic.zip](https://kratt.roots.ee/stitch-o-matic.zip)
 - [tikand-entusse.zip](https://kratt.roots.ee/tikand-entusse.zip)
 - [tikandikogu.zip](https://kratt.roots.ee/tikandikogu.zip)

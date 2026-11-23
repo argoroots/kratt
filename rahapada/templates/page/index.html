@@ -1,0 +1,573 @@
+<meta name="dash-one-writer">
+<style data-draw="features"></style>
+<style>
+.fa { --cds-font-size-caption: 14px; --cds-font-size-body: 16px; --cds-font-size-heading: 19px; --cds-font-size-title: 30px; font-size: var(--cds-font-size-body); font-family: var(--font-anthropic-sans); color: var(--color-fg); display: grid; gap: var(--cds-gap-xl); }
+.fa h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; }
+.fa h3 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0 0 var(--cds-gap-xs); }
+.fa .lead { font-size: var(--cds-font-size-body); color: var(--color-fg-muted); margin: var(--cds-gap-sm) 0 0; max-width: 62rem; line-height: 1.5; }
+.fa .lead b, .fa .note b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.fa .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0 0 var(--cds-gap-md); line-height: 1.45; max-width: 60rem; }
+.fa .note p { margin: 0; }
+.fa .note p + p { margin-top: .55em; }
+.fa .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr)); gap: var(--cds-gap-md); }
+.fa .tile, .fa .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); min-width: 0; }
+.fa .lbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.fa .big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; margin-top: var(--cds-gap-xs); }
+.fa .sub { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: var(--cds-gap-xs); line-height: 1.4; }
+.fa .bad { color: var(--color-bad); }
+.fa .ok { color: var(--color-ok); }
+.fa .warn { color: var(--color-warn); }
+.fa .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: var(--cds-gap-md); }
+.fa .grid2.g12 { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
+@media (max-width: 56rem) { .fa .grid2.g12 { grid-template-columns: minmax(0, 1fr); } }
+.fa .chart { position: relative; min-height: 260px; }
+.fa .chart svg { display: block; }
+.fa .multi { position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--cds-gap-md); }
+.fa .mini { background: color-mix(in oklab, var(--color-fg) 5%, transparent); border-radius: var(--cds-radius); padding: var(--cds-pad-sm) var(--cds-pad-md, 0.9rem); }
+.fa .mini svg { display: block; }
+.fa .mh { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 0 var(--cds-gap-sm, 0.5rem); margin-bottom: 4px; }
+.fa .mn { font-weight: var(--cds-font-weight-medium); }
+.fa .mv { font-variant-numeric: tabular-nums; text-align: right; }
+.fa .mc { grid-column: 2; text-align: right; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.fa .mc.up { color: var(--cds-chart-status-critical); }
+.fa .mc.down { color: var(--cds-chart-status-good, var(--color-fg-muted)); }
+.fa .tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; z-index: 2; }
+.fa .tip .t { color: var(--cds-text-secondary); margin-bottom: 2px; }
+.fa .tip table.tt { width: auto; font-size: inherit; }
+.fa .tip table.tt td { border: 0; padding: 1px 0; }
+.fa .tip table.tt td.num { padding-left: var(--cds-pad-md, 0.9rem); text-align: right; }
+.fa .tip table.tt tr.tot td { font-weight: var(--cds-font-weight-medium, 600); border-top: 1px solid var(--color-border-line); padding-top: 3px; }
+.fa .tip table.tt tr.ft td { color: var(--cds-text-secondary); }
+.fa .tip table.tt tr.tot + tr.ft td { padding-top: 4px; }
+.fa .sw { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .35rem; vertical-align: middle; }
+.fa .legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: var(--cds-gap-sm); justify-content: center; }
+.fa .tbl { max-height: none; overflow-x: auto; overflow-y: visible; }
+.fa .tbl.full { max-height: none; overflow: visible; }
+.fa .month-tbl table { table-layout: auto; }
+.fa .card { position: relative; }
+.fa .card > h3 { padding-right: 2.2rem; margin-top: -0.3em; margin-bottom: calc(var(--cds-gap-xs) * 1.5); }
+.fa .card > .help { top: calc(var(--cds-pad-lg) - 0.3em); }
+.fa .help { position: absolute; top: var(--cds-pad-lg); right: var(--cds-pad-lg); width: 1.5rem; height: 1.5rem; padding: 0; border-radius: 50%; border: 1px solid var(--color-border-line); background: var(--color-panel); color: var(--color-fg-muted); font: inherit; font-size: var(--cds-font-size-caption); line-height: 1; cursor: help; z-index: 4; }
+.fa .help:hover, .fa .help:focus-visible { color: var(--color-fg); border-color: var(--color-fg-muted); }
+.fa .help + .note { display: none; position: absolute; top: calc(var(--cds-pad-lg) + 1.5rem); right: var(--cds-pad-lg); z-index: 6; width: max-content; max-width: min(28rem, calc(100% - 2 * var(--cds-pad-lg))); margin: 0; padding: var(--cds-pad-sm) var(--cds-pad-md, 0.9rem); background: var(--cds-surface-popover, var(--color-panel)); border: 1px solid var(--cds-border, var(--color-border-line)); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); color: var(--color-fg); }
+.fa .help:hover + .note, .fa .help:focus + .note, .fa .help + .note:hover { display: block; }
+.fa tbody tr:last-child td, .fa tbody tr.lastv td { border-bottom: 0; }
+.fa tr.okrow td, .fa tr.okrow td.muted, .fa tr.c.okrow td, .fa tr.okrow td.ok { color: color-mix(in oklab, var(--color-ok) 78%, white); }
+.fa tr.badrow td { color: var(--color-bad); }
+.fa tr.tot td { font-weight: var(--cds-font-weight-medium, 600); border-top: 2px solid var(--color-border-line); }
+.fa td.wfb { width: 38%; min-width: 8rem; vertical-align: middle; }
+.fa .wft { position: relative; height: .8rem; }
+.fa .wff { position: absolute; top: 0; bottom: 0; border-radius: var(--cds-radius); }
+.fa table.kv { font-size: var(--cds-font-size-body); }
+.fa table.kv td, .fa table.kv th { padding: 6px var(--cds-pad-sm); line-height: 1.35; vertical-align: middle; }
+.fa table.kv tr:has(+ tr.tot) td { border-bottom: 0; }
+.fa tr.tot td.bad { color: var(--color-bad); }
+.fa tr.tot td.ok { color: color-mix(in oklab, var(--color-ok) 78%, white); }
+.fa table.kv tr.tot td { font-weight: var(--cds-font-weight-medium, 600); border-top: 0; border-bottom: 0; background: color-mix(in oklab, var(--color-fg) 5%, transparent); }
+.fa table.kv tr.tot td:first-child { padding-left: 0; box-shadow: calc(-1 * var(--cds-pad-sm)) 0 0 color-mix(in oklab, var(--color-fg) 5%, transparent); }
+.fa table.kv tr.tot td:last-child { padding-right: 0; box-shadow: var(--cds-pad-sm) 0 0 color-mix(in oklab, var(--color-fg) 5%, transparent); }
+.fa .ctr, .fa th.ctr { text-align: center; white-space: nowrap; }
+.fa .ltiles > div { text-align: center; }
+.fa table.kv tr.tot td.ok, .fa table.kv tr.tot:has(td:last-child.ok) td:first-child { color: color-mix(in oklab, var(--color-ok) 78%, white); }
+.fa table.kv tr.tot td.bad, .fa table.kv tr.tot:has(td:last-child.bad) td:first-child { color: var(--color-bad); }
+.fa table.kv th { position: static; }
+.fa .month-tbl td, .fa .month-tbl th { white-space: nowrap; }
+.fa .month-tbl td.jkd { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fa table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.fa th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); position: sticky; top: 0; background: var(--color-panel); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.fa td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); vertical-align: top; }
+.fa table td:first-child, .fa table th:first-child { padding-left: 0; }
+.fa table td:last-child, .fa table th:last-child { padding-right: 0; }
+.fa .num { text-align: right; white-space: nowrap; }
+.fa .muted { color: var(--color-fg-muted); }
+.fa tr.g td { font-weight: var(--cds-font-weight-medium); cursor: pointer; }
+.fa tr.g td:first-child::before, .fa .ptbl tr.s td:first-child::before { content: ""; display: inline-block; width: .42em; height: .42em; border-right: 1.6px solid var(--color-fg-muted); border-bottom: 1.6px solid var(--color-fg-muted); transform: rotate(-45deg); margin: 0 .7em .12em .08em; vertical-align: middle; transition: transform .15s; }
+.fa tr.g.open td:first-child::before, .fa .ptbl tr.s.open td:first-child::before { transform: rotate(45deg); margin-bottom: .3em; }
+.fa tr.c td { color: var(--color-fg-muted); }
+.fa tr.c td:first-child { padding-left: 1.2em; }
+.fa .bars { display: grid; grid-template-columns: max-content minmax(3rem, 1fr) max-content; align-items: center; gap: var(--cds-gap-xs) var(--cds-gap-sm); font-size: var(--cds-font-size-caption); }
+.fa .bar { display: contents; }
+.fa .bar .track { height: .7rem; background: var(--cds-chart-grid); border-radius: var(--cds-radius); overflow: hidden; }
+.fa .bar .fill { height: 100%; border-radius: var(--cds-radius); }
+.fa .bar .v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fa #pension dl { display: block; font-size: var(--cds-font-size-body); }
+.fa #pension dt { font-weight: var(--cds-font-weight-medium); margin-top: var(--cds-gap-md); }
+.fa #pension dt:first-child { margin-top: 0; }
+.fa #pension dd { color: var(--color-fg-muted); line-height: 1.5; margin-top: 2px; }
+.fa .tl { display: grid; gap: var(--cds-gap-md); }
+.fa .tl .ev { display: grid; grid-template-columns: 3.2rem 1fr; gap: var(--cds-gap-md); align-items: start; }
+.fa .tl .cal { display: grid; grid-template-rows: auto 1fr; align-items: center; aspect-ratio: 1; text-align: center; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; background: var(--color-panel); font-variant-numeric: tabular-nums; }
+.fa .tl .cal .cy { background: color-mix(in oklab, var(--color-fg) 8%, transparent); font-size: 11px; line-height: 1.2; color: var(--color-fg-muted); padding: 2px 0; }
+.fa .tl .cal .cm { font-size: var(--cds-font-size-caption); font-weight: var(--cds-font-weight-medium); text-transform: uppercase; letter-spacing: .04em; padding: 4px 0 5px; }
+.fa .wft .wz { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--cds-chart-reference, var(--color-border-line)); }
+.fa table.ttbl td { vertical-align: middle; white-space: nowrap; }
+.fa table.ttbl td.tname .tn { display: flex; align-items: center; gap: var(--cds-gap-sm, 0.5rem); }
+.fa table.ptab td { vertical-align: middle; white-space: nowrap; }
+.fa table.ptab { table-layout: fixed; }
+.fa table.ptab th:nth-child(1) { width: 42%; }
+.fa table.ptab th:nth-child(2) { width: 22%; }
+.fa table.ptab th:nth-child(3) { width: 12%; }
+#comparison table.ptab th:nth-child(1) { width: 44%; }
+#comparison table.ptab th:nth-child(2) { width: 14%; }
+#comparison table.ptab th:nth-child(3) { width: 20%; }
+.fa table.ptab td:first-child { overflow: hidden; text-overflow: ellipsis; }
+.fa th[data-tsort] { cursor: pointer; user-select: none; }
+.fa th[data-tsort]:hover { color: var(--color-fg); }
+.fa table.ptab .wft { height: .7rem; }
+.fa table.ptab td.wfb { padding-left: var(--cds-gap-lg, 1rem); }
+.fa table.ttbl .tlogo { flex: 0 0 2.8rem; height: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.fa table.ttbl .tlogo img { max-width: 100%; max-height: 14px; object-fit: contain; object-position: center; }
+.fa table.ttbl tr.done .tlogo img { opacity: .5; }
+.fa table.ttbl td.fund { color: var(--color-link, #2f6fdb); font-weight: var(--cds-font-weight-medium); }
+.fa table.ttbl tr.negfirst > td { border-top: 1px solid var(--color-bad); }
+.fa table.ttbl tr:has(+ tr.negfirst) > td { border-bottom-color: var(--color-bad); }
+#p-invest .neg, #p-invest .tip td.neg, #p-invest .tpop td.neg { color: var(--color-bad); }
+.fa h3 .htot { font-weight: 400; font-size: var(--cds-font-size-body); margin-left: .4em; font-variant-numeric: tabular-nums; }
+.fa table.ttbl td.dep { color: color-mix(in oklab, var(--color-ok) 78%, white); font-weight: var(--cds-font-weight-medium); }
+.fa table.ttbl tr.done td:first-child { color: var(--color-fg-muted); }
+.fa table.ttbl td.wfb { width: 22%; min-width: 6rem; }
+.fa table.ttbl .wft { height: .7rem; }
+.fa table.ttbl > tbody > tr:hover > td { background: var(--cds-hover, rgba(127,127,127,0.08)); }
+.fa table.ttbl .tpop { display: none; position: fixed; z-index: 20; padding: var(--cds-pad-xs) var(--cds-pad-sm); background: var(--cds-surface-popover, var(--color-panel)); border: 1px solid var(--cds-border, var(--color-border-line)); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-caption); color: var(--color-fg); white-space: nowrap; pointer-events: none; }
+.fa table.ttbl tr:hover .tpop { display: block; }
+.fa .tpop .t.plogo { display: flex; justify-content: center; align-items: center; margin: 4px 0 12px; width: 0; min-width: 100%; }
+.fa .tpop .plogo img { width: auto; height: auto; max-height: 28px; max-width: 66%; object-fit: contain; }
+.fa table.ptab td .tn { display: flex; align-items: center; gap: var(--cds-gap-sm, 0.5rem); min-width: 0; }
+.fa table.ptab .ticon { flex: 0 0 1.6rem; text-align: center; }
+.fa table.ptab .tnm { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fa .tpop .t { color: var(--cds-text-secondary, var(--color-fg-muted)); margin-bottom: 2px; }
+.fa .tpop table.tt { width: auto; font-size: inherit; }
+.fa .tpop table.tt td { border: 0; padding: 1px 0; background: none; }
+.fa .tpop table.tt td.num { padding-left: var(--cds-pad-md, 0.9rem); text-align: right; }
+.fa .tpop table.tt tr.tot td { font-weight: 700; border-top: 1px solid var(--color-border-line); padding-top: 3px; }
+.fa .tpop table.tt tr.ft td { color: var(--cds-text-secondary, var(--color-fg-muted)); }
+.fa td.mitu { position: relative; cursor: help; }
+.fa td.mitu .pop { display: none; position: fixed; z-index: 20; min-width: max-content; padding: var(--cds-pad-xs) var(--cds-pad-sm); background: var(--cds-surface-popover, var(--color-panel)); border: 1px solid var(--cds-border, var(--color-border-line)); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); color: var(--color-fg); font-weight: 400; line-height: 1.5; }
+.fa td.mitu:hover .pop { display: block; }
+.fa .tl .ev .h { font-weight: var(--cds-font-weight-medium); margin: 2px 0; }
+.fa .tl .ev .x { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); line-height: 1.45; }
+.fa .split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--cds-gap-lg); }
+.fa .ltiles { grid-template-columns: repeat(auto-fit, minmax(4.2rem, 1fr)); }
+.fa .ltiles .lbl { white-space: nowrap; }
+.fa .tile .chg { font-variant-numeric: tabular-nums; }
+.fa .tile > .lbl { font-weight: 600; color: var(--color-fg); padding-right: 2rem; }
+.fa .tile { position: relative; }
+.fa .tile > .help { top: calc(var(--cds-pad-lg) - 0.15em); }
+.fa .tile > .help + .note { width: 22rem; max-width: 80vw; }
+.fa .tile:first-child > .help + .note { right: auto; left: var(--cds-pad-lg); }
+.fa #loan-burden .ltiles + .tbl { margin-top: var(--cds-gap-xl); }
+.fa #net-worth { display: flex; flex-direction: column; }
+.fa #net-worth > .chart { flex: 1 1 auto; }
+.fa #assets .split .big + table { margin-top: var(--cds-gap-lg); }
+.fa .ltiles > div { background: color-mix(in oklab, var(--color-fg) 5%, transparent); border-radius: var(--cds-radius); padding: var(--cds-pad-sm) var(--cds-pad-md, 0.9rem); }
+.fa table.loans2 tbody tr.lr { cursor: pointer; }
+.fa table.loans2 tbody tr.lr td:first-child::before { content: ""; display: inline-block; width: .4em; height: .4em; border-right: 1.6px solid var(--color-fg-muted); border-bottom: 1.6px solid var(--color-fg-muted); transform: rotate(-45deg); margin: 0 .6em .12em .1em; }
+.fa table.loans2 tbody tr.lr.open td:first-child::before { transform: rotate(45deg); margin-bottom: .22em; }
+.fa table.loans2 tbody tr.lr.open td { border-bottom: 0; }
+.fa table.loans2 tr.det > td { padding: var(--cds-pad-xs) 0 var(--cds-pad-md, .9rem) 1.2em; white-space: normal; }
+.fa table.loans2 tr.det .lnote { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.45; margin: 0 0 var(--cds-gap-sm, .5rem); max-width: 60rem; }
+.fa table.loans2 tr.det table td { border-bottom: 0; padding: 2px var(--cds-pad-sm) 2px 0; font-size: var(--cds-font-size-caption); }
+.fa .sublbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); margin: var(--cds-gap-lg) 0 var(--cds-gap-xs); }
+.fa .fail { display: flex; align-items: center; justify-content: center; gap: .4rem; min-height: inherit; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.fa .fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+.fa [data-dash-source-state=empty] { color: transparent; }
+.fa [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.fa > input.tabr { position: absolute; opacity: 0; pointer-events: none; }
+.fa .tabnav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); position: sticky; top: 0; z-index: 15; background: var(--color-bg, var(--color-panel)); }
+.fa .tabnav label { padding: var(--cds-pad-sm) var(--cds-pad-md, 0.9rem); cursor: pointer; color: var(--color-fg-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: var(--cds-font-weight-medium); }
+.fa .tabnav label:hover { color: var(--color-fg); }
+.fa .tabp { display: none; gap: var(--cds-gap-xl); grid-template-columns: minmax(0, 1fr); }
+.fa .tabp > * { min-width: 0; }
+#tab-month:checked ~ .t-month, #tab-spending:checked ~ .t-spending, #tab-invest:checked ~ .t-invest, #tab-loans:checked ~ .t-loans, #tab-goals:checked ~ .t-goals, #tab-tx:checked ~ .t-tx { display: grid; }
+.fa .gtrack { height: .55rem; margin-top: var(--cds-gap-sm, .5rem); background: var(--cds-chart-grid); border-radius: 999px; overflow: hidden; }
+.fa .gfill { height: 100%; border-radius: 999px; }
+.fa .gpct { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin-top: 4px; text-align: right; font-variant-numeric: tabular-nums; }
+.fa .grid2.g21 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+@media (max-width: 56rem) { .fa .grid2.g21 { grid-template-columns: minmax(0, 1fr); } }
+.fa .steps, .fa .rules { list-style: none; margin: var(--cds-gap-sm, .5rem) 0 0; padding: 0; display: grid; gap: var(--cds-gap-md); }
+.fa .steps li { position: relative; display: grid; grid-template-columns: 2rem 1fr; gap: var(--cds-gap-md); align-items: start; }
+.fa .steps li:not(:last-child)::after { content: ""; position: absolute; left: calc(1rem - 1px); top: 2.2rem; bottom: calc(-1 * var(--cds-gap-md) + .2rem); width: 2px; background: var(--color-border-line); }
+.fa .steps .sn { display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 50%; background: color-mix(in oklab, var(--color-fg) 8%, transparent); border: 1px solid var(--color-border-line); font-weight: var(--cds-font-weight-medium); font-variant-numeric: tabular-nums; }
+.fa .steps li:first-child .sn { background: var(--color-fg); color: var(--color-panel); border-color: var(--color-fg); }
+.fa .steps .st, .fa .rules .st { font-weight: var(--cds-font-weight-medium); margin-top: .25rem; }
+.fa .steps .sd, .fa .rules .sd { color: var(--color-fg-muted); line-height: 1.5; margin-top: 2px; }
+.fa .rules li { padding-left: .9rem; border-left: 3px solid var(--color-border-line); }
+.fa .rules .st { margin-top: 0; }
+.fa .pfilters { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm, 0.5rem); margin-bottom: var(--cds-gap-md); }
+.fa .psearch { flex: 1 1 16rem; min-width: 0; font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg); background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: 6px 10px; }
+.fa .psearch:focus { outline: 2px solid var(--cds-focus, currentColor); outline-offset: 1px; }
+.fa .psearch::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; cursor: pointer; background: var(--color-fg-muted); -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.fa .ptbl { max-height: none; }
+.fa .selw { position: relative; display: inline-flex; align-items: center; }
+.fa .selw select { padding-right: 3.2rem; min-width: 13rem; }
+.fa .selw select.empty { color: var(--color-fg-muted); }
+.fa .pfilters select, .fa .pfilters select option { font-family: inherit; font-size: var(--cds-font-size-caption); }
+.fa .selw.srch { flex: 1 1 16rem; min-width: 0; }
+.fa .selw.srch .psearch { width: 100%; padding-right: 2rem; }
+.fa .selw.srch .selx { right: .6rem; }
+.fa .psearch::-webkit-search-cancel-button { display: none; }
+.fa .selx { position: absolute; right: 1.9rem; top: 50%; transform: translateY(-50%); width: 1rem; height: 1rem; padding: 0; border: 0; border-radius: 50%; background: color-mix(in oklab, var(--color-fg) 12%, transparent); color: var(--color-fg-muted); font: inherit; font-size: 11px; line-height: 1; cursor: pointer; }
+.fa .selx:hover { background: color-mix(in oklab, var(--color-fg) 22%, transparent); }
+.fa th[data-sort] { cursor: pointer; user-select: none; }
+.fa th[data-sort]:hover { color: var(--color-fg); }
+.fa th[aria-sort="ascending"], .fa th[aria-sort="descending"] { color: var(--color-fg); }
+.fa th[aria-sort="ascending"]::after { content: " ▲"; font-size: .8em; }
+.fa th[aria-sort="descending"]::after { content: " ▼"; font-size: .8em; }
+.fa .ptbl td, .fa .ptbl th { white-space: nowrap; }
+.fa .ptbl td:first-child { white-space: normal; width: 100%; min-width: 10rem; }
+.fa .ptbl td.pd .pdt, .fa .ptbl td.pd .pnm { white-space: nowrap; }
+.fa .ptbl td.pd .pdt { display: inline-block; min-width: 8.5rem; margin-right: .6rem; font-variant-numeric: tabular-nums; }
+.fa .ptbl td.pd .pnm { display: inline; color: var(--color-fg); }
+.fa .ptbl td.pd .pds { display: block; margin-top: 2px; }
+.fa .ptbl tr.g td:first-child::before { content: none; }
+/* avatava rea nool on lahtri vasakus servas eraldi: murduv tekst jääb noolest paremale ega lähe selle alla */
+.fa tr.g td:first-child, .fa .ptbl tr.s td:first-child, .fa table.loans2 tbody tr.lr td:first-child { position: relative; padding-left: 1.2em; }
+.fa tr.g td:first-child::before, .fa .ptbl tr.s td:first-child::before, .fa table.loans2 tbody tr.lr td:first-child::before { position: absolute; left: .08em; top: calc(var(--cds-pad-xs) + .4em); margin: 0; }
+.fa tr.g.open td:first-child::before, .fa .ptbl tr.s.open td:first-child::before, .fa table.loans2 tbody tr.lr.open td:first-child::before { top: calc(var(--cds-pad-xs) + .3em); margin: 0; }
+.fa .ptbl tr.g td:first-child { padding-left: 0; }
+.fa .ptbl tr.g:not(.sel) td:first-child:hover { text-decoration: underline; }
+.fa .ptbl tr.g.sel td { cursor: default; }
+.fa .ptbl tr.s td { cursor: pointer; }
+.fa .ptbl tr.s td:first-child { padding-left: 2.4em; }
+.fa .ptbl tr.s td:first-child::before { left: 1.28em; }
+.fa .ptbl tr.c td:first-child { padding-left: 2.4em; }
+.fa .ptbl td.pd .pds:empty { display: none; }
+#tab-month:checked ~ .tabnav label[for=tab-month], #tab-spending:checked ~ .tabnav label[for=tab-spending], #tab-loans:checked ~ .tabnav label[for=tab-loans], #tab-invest:checked ~ .tabnav label[for=tab-invest], #tab-tx:checked ~ .tabnav label[for=tab-tx], #tab-goals:checked ~ .tabnav label[for=tab-goals] { color: var(--color-fg); border-bottom-color: var(--color-fg); }
+.fa > input.tabr:focus-visible ~ .tabnav { outline: 2px solid var(--cds-focus, currentColor); outline-offset: 2px; }
+.fa .navr { margin-left: auto; display: flex; gap: var(--cds-gap-sm, 0.5rem); align-items: center; }
+.fa .ygrp { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.fa .ybtn { font: inherit; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); background: transparent; border: 0; padding: 3px 10px; cursor: pointer; }
+.fa .ybtn + .ybtn { border-left: 1px solid var(--color-border-line); }
+.fa .ybtn[aria-pressed="true"] { color: var(--color-fg); background: var(--color-panel); font-weight: var(--cds-font-weight-medium, 600); }
+.fa .ybtn:hover { color: var(--color-fg); }
+.fa .amtm { user-select: none; filter: blur(2.5px); color: #4a4a4a !important; }
+.fa.hide-amt .amt { visibility: hidden; display: inline-block; position: relative; width: 3.2em; overflow: visible; white-space: nowrap; vertical-align: bottom; user-select: none; }
+.fa.hide-amt .amt::before { content: "•••• €"; white-space: nowrap; visibility: visible; position: absolute; left: 0; filter: blur(2.5px); color: #4a4a4a; }
+.fa dl { display: block; margin: 0; font-size: var(--cds-font-size-body); }
+.fa dt { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); margin-top: var(--cds-gap-md); }
+.fa dt:first-child { margin-top: 0; }
+.fa dd { margin: 2px 0 0; color: var(--color-fg-muted); line-height: 1.5; }
+.fa .help.open + .note { display: block; }
+.fa .tabp.folds { gap: var(--cds-gap-md); }
+.fa .t-goals.o2 { order: 2; } .fa .t-goals.o3 { order: 3; } .fa .t-goals.o4 { order: 4; } .fa .t-goals.o5 { order: 5; } .fa .t-goals { order: 1; }
+.fa #net-worth { order: -1; }
+.fa .folds .card > h3 { cursor: pointer; user-select: none; }
+.fa .folds .card > h3 > label { display: flex; align-items: center; gap: .65em; cursor: pointer; }
+.fa .folds .card > h3 > label::before { content: ""; flex: none; width: .45em; height: .45em; border-right: 1.8px solid var(--color-fg-muted); border-bottom: 1.8px solid var(--color-fg-muted); transform: translateX(-.08em) rotate(-45deg); margin-left: .05em; transition: transform .15s; }
+.fa .folds .card:has(> .cardt:checked) > h3 > label::before { transform: translateY(-.15em) rotate(45deg); }
+.fa .folds .card:not(:has(> .cardt:checked)) > h3 { margin-bottom: -0.3em; }
+.fa .folds .card:not(:has(> .cardt:checked)) > :not(h3) { display: none !important; }
+.fa .folds .card > .cardt { position: absolute; opacity: 0; pointer-events: none; }
+@media (max-width: 40rem) {
+  .fa { --cds-font-size-title: 24px; --cds-font-size-heading: 17px; gap: var(--cds-gap-lg); }
+  .fa .tabp { gap: var(--cds-gap-lg); }
+  .fa .tile, .fa .card { padding: .85rem; }
+  .fa .help { top: .85rem; right: .85rem; width: 1.75rem; height: 1.75rem; }
+  .fa .card > .help { top: calc(.85rem - 0.3em); }
+  .fa .help + .note { top: calc(.85rem + 1.9rem); right: .85rem; max-width: calc(100% - 1.7rem); }
+  .fa .tile > .help + .note { width: auto; max-width: calc(100% - 1.7rem); left: .85rem; }
+  .fa .tabnav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+  .fa .tabnav label { text-align: center; white-space: nowrap; padding: .55rem .2rem; font-size: 15px; }
+  .fa .navr { grid-column: span 2; margin: 0; justify-content: flex-end; padding: .2rem 0; }
+  .fa .ybtn { padding: 6px 10px; }
+  .fa .tbl, .fa .tbl.full { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-right: -.85rem; padding-right: .85rem; }
+  .fa #loan-burden > table, .fa #assets table { display: block; overflow-x: auto; }
+  .fa td.wfb { min-width: 4.5rem; }
+  /* Instrumentide tootlus: telefonis ainult nimi, väärtus, tootlus ja tulp; jaotus on rea puudutusel avanevas aknas */
+  .fa table.ttbl th:nth-child(2), .fa table.ttbl td:nth-child(2), .fa table.ttbl th:nth-child(n+4):nth-child(-n+7), .fa table.ttbl td:nth-child(n+4):nth-child(-n+7) { display: none; }
+  .fa table.ttbl { width: 100%; table-layout: auto; }
+  .fa table.ttbl td.tname { max-width: 7rem; }
+  .fa table.ttbl td.wfb { width: auto; min-width: 3.5rem; }
+  .fa table.ttbl td.tname .tn > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .fa table.ttbl .tlogo { flex-basis: 2.2rem; }
+  .fa .ptbl td:first-child { min-width: 8rem; }
+  .fa .psearch, .fa .pfilters select { font-size: 16px; flex-basis: 100%; }
+  .fa .selw { flex: 1 1 100%; } .fa .selw select { width: 100%; }
+  .fa .multi { grid-template-columns: minmax(0, 1fr); }
+  .fa .tl .ev { grid-template-columns: 2.8rem 1fr; gap: var(--cds-gap-sm, .5rem); }
+  .fa td.mitu .pop { max-width: calc(100vw - 16px); }
+}
+</style>
+
+<div class="fa" data-read lang="et">
+  <header id="header">
+    <h1>Rahaasjad</h1>
+    <p class="lead" data-draw="lead" data-source="header lead_group"></p>
+  </header>
+
+  <input type="radio" name="tab" class="tabr" id="tab-month" checked>
+  <input type="radio" name="tab" class="tabr" id="tab-spending">
+  <input type="radio" name="tab" class="tabr" id="tab-invest">
+  <input type="radio" name="tab" class="tabr" id="tab-loans">
+  <input type="radio" name="tab" class="tabr" id="tab-goals">
+  <input type="radio" name="tab" class="tabr" id="tab-tx">
+  <nav class="tabnav">
+    <label for="tab-month">Kuu</label>
+    <label for="tab-spending">Tulud ja kulud</label>
+    <label for="tab-invest" data-feature="returns">Investeeringud</label>
+    <label for="tab-loans" data-feature="loans">Laenud</label>
+    <label for="tab-goals">Vara ja eesmärgid</label>
+    <label for="tab-tx">Kanded</label>
+    <span class="navr"><span class="ygrp" role="group" aria-label="Aastad" data-draw="years"></span><span class="ygrp"><button type="button" class="ybtn" data-amt aria-pressed="true" aria-label="Summad" title="Summad nähtaval või peidetud">€</button></span></span>
+  </nav>
+
+  <div class="tabp t-month" id="p-month">
+  <section class="card" id="month-total">
+    <h3><span data-draw="month_name" data-source="month_days"></span> <span class="htot">tulem seni <span data-draw="signed_color" data-source="month_summary" data-field="value" data-where="metric=net_so_far">—</span> · kuu lõpuks <span data-draw="signed_color" data-source="month_summary" data-field="value" data-where="metric=forecast_end">—</span></span></h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kuu tulem algusest peale: pidev joon on tegelik seis, katkendjoon prognoos kuu lõpuni. Peen hall joon on eelmise kuu tegelik seis, joondatud palgapäevaga: palk tuleb mõlemal joonel samas kohas. Palgapäevale eelnev ja järgnev osa on venitatud või kokku surutud. Palgapäev on tegelik maksepäev või, kui palka veel pole, reeglites antud kuupäev või sellele eelnev tööpäev (nädalavahetused ja riigipühad jäetakse vahele).</p><p>Prognoos lisab veel laekumata palga ja toetused ning ootel püsimaksed, sh pensionifondi sissemakse. Muutuv kulu (toit, väljas söömine, ostlemine jm) ülejäänud päevadeks tuleb viimaste kuude (<span data-draw="window_months"></span>) samast ajavahemikust, joondatud palgapäevaga nagu eelmise kuu joon; praegu keskmiselt <b data-draw="metric" data-source="month_summary" data-field="value" data-where="metric=var_per_day">—</b> päevas. Kui andmed on tänasest, on tänane päev pooleli: tänased ootel maksed ja tänane muutuv kulu on prognoosis.</p><p>Poolläbipaistev ala on prognoosi vahemik: kui sama arvutus teha iga viimase kuu (<span data-draw="window_months"></span>) kohta teiste kuude põhjal, jäi tegelik muutuv kulu samas ajavahemikus 8 korral 10-st selle sisse. Mida lähemal kuu lõpp, seda kitsam ala. Suured juhuslikud ostud ja reisid võivad jääda ka sellest välja.</p><p><b>Püsimaksed</b> on maksed, mis korduvad viimastel kuudel (<span data-draw="window_months"></span>) vähemalt kolmel kuul (laenud, liising, kommunaal, side, kindlustus, tellimused jm). <b>Muutuv kulu</b> on kõik muu, tagastused on sealt maha arvatud. Tavaline kuu on nende kuude keskmine tulem.</p></div>
+    <div class="chart" id="month-chart" data-draw="month_chart" data-source="month_days"></div>
+  </section>
+  <section class="card" id="month-groups">
+    <h3>Prognoos</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p><b>Seni</b> on selle kuu kanded tänaseni. <b>Prognoos</b> on seni tehtu, ootel püsimaksed ja muutuv kulu ülejäänud päevadeks. <b>Tavaline</b> on viimaste kuude (<span data-draw="window_months"></span>) kuu keskmine. <b>Vahe</b> on prognoos miinus tavaline: punane tähendab tavalisest suuremat kulu.</p><p>Tulp rea lõpus näitab, kuidas prognoositud tulu jaguneb: iga grupp võtab oma osa ja viimane rida näitab, mis üle jääb. Vahe on tulba paremas otsas värviga: punane osa on tavalisest suurem kulu, roheline osa tavalisest väiksem kulu (see jääb alles).</p><p>Klõpsa grupil, et näha kategooriaid.</p></div>
+    <div class="tbl full" data-source="month_groups month_categories"><table><thead><tr><th>Grupp</th><th class="num">Vahe</th><th class="num">Seni</th><th class="num">Prognoos</th><th class="num">Tavaline</th><th class="wfh"></th></tr></thead><tbody data-draw="month_groups_table"></tbody></table></div>
+  </section>
+  <section class="grid2">
+    <div class="card" id="month-pending">
+      <h3>Ootel püsimaksed</h3>
+      <div class="tbl full" data-source="month_recurring transactions"><table><thead><tr><th class="ctr">Kuupäev</th><th>Saaja / maksja</th><th>Grupp</th><th class="num">Summa</th></tr></thead><tbody data-draw="month_expected" data-status="pending"></tbody></table></div>
+    </div>
+    <div class="card" id="month-paid">
+      <h3>Tehtud püsimaksed</h3>
+      <div class="tbl full" data-source="month_recurring transactions"><table><thead><tr><th class="ctr">Kuupäev</th><th>Saaja / maksja</th><th>Grupp</th><th class="num">Summa</th></tr></thead><tbody data-draw="month_expected" data-status="paid"></tbody></table></div>
+    </div>
+  </section>
+  <section class="card" id="month-tx">
+    <h3>Kanded</h3>
+    <div class="tbl full month-tbl" data-source="transactions month_days"><table><thead><tr><th class="ctr">Kuupäev</th><th class="ctr">Kell</th><th>Saaja / maksja</th><th>Kirjeldus</th><th>Grupp</th><th>Kategooria</th><th class="num">Summa</th></tr></thead><tbody data-draw="month_tx"></tbody></table></div>
+  </section>
+  </div>
+
+  <div class="tabp t-spending" id="p-spending">
+  <section class="card" id="group-trend">
+    <h3>Trend</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Iga kast on üks grupp: tulbad on kuu summa, joon 3 kuu libisev keskmine. Jooksva kuu hele punktiiriga tulp on kuu lõpu prognoos (vaheleht Kuu); keskmistes see ei ole.</p><p>Kulugruppidel ja investeeringutel on ühine skaala, et nende suurusi saaks omavahel võrrelda. Tuludel on oma skaala.</p><p>Number nime kõrval on viimaste kuude (<span data-draw="window_months"></span>) keskmine kuus. Selle all olev nool näitab muutust samade kuudega aasta varem (<span data-draw="window_prev"></span>) võrreldes: kulude kasv on punane, tulude ja investeeringute kasv roheline.</p></div>
+    <div class="multi" data-draw="group_multiples" data-source="group_months months month_groups"></div>
+  </section>
+  <section class="card" id="groups">
+    <h3>Keskmine</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Tulud, kulugrupid, investeeringud ja mis pärast neid üle jääb, eurodes kuu keskmisena. Investeeringud on aktsiate ostud miinus müügid ning pensionifondide sissemaksed; miinus tähendab, et müüsid rohkem kui ostsid. Aktsiate müük ei ole tulu (vara vahetub rahaks), seega rida „Üle jääb“ müügist ei suurene: müügikuul loetakse aktsiate investeering nulliks. Kui valitud on mitu aastat, on veergudes poolaastad, ühe aasta korral kvartalid.</p><p>Tulp rea lõpus näitab viimase veeru kohta, kuidas tulu jaguneb: iga grupp võtab oma osa ja „Üle jääb“ näitab jääki. Klõpsa grupil, et näha kategooriaid.</p><p>Ühekordsed maksed ei ole sees. Muud laekumised (tagastused, pere ülekanded) vähendavad oma kategooria kulu.</p></div>
+    <div class="tbl full" data-source="groups categories month_average">
+      <table>
+        <thead><tr data-draw="groups_head"></tr></thead>
+        <tbody data-draw="groups_table"></tbody>
+      </table>
+    </div>
+  </section>
+  <section class="grid2">
+  <div class="card" id="fixed-costs">
+    <h3>Püsikulud ja muutuv kulu</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p><b>Püsikulud</b> on maksed, mis tulevad igal kuul samas suuruses: laenud ja liising lepingu järgi, kodu, auto, tellimused jm jooksva aasta tavalise kuumaksega. Sees on ainult praegu kehtivad maksed.</p><p><b>Muutuv kulu</b> on viimaste kuude (<span data-draw="window_months"></span>) kuu keskmised kulud kokku miinus püsikulud: toit, väljas söömine, ostlemine, reisid jm. Seda saad ise kõige rohkem mõjutada.</p><p>Viimases veerus on osa kuu keskmisest tulust. Klõpsa osal, et näha makseid.</p></div>
+    <div class="tbl full" data-source="recurring loans month_average"><table><thead><tr><th></th><th class="num">Kuus</th><th class="num">Tulust</th></tr></thead><tbody data-draw="fixed_table"></tbody></table></div>
+  </div>
+  <div class="card" id="subscriptions">
+    <h3>Tellimused</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kõik praegu kehtivad tellimused ja aastatasud. Igakuistel tellimustel on viimane makse, et hinnatõus oleks näha. Aastatasud on kuu veerus jagatud 12 kuuga, igakuised tellimused aasta veerus korrutatud 12-ga.</p><p>Lõpetatud tellimused ei ole sees.</p></div>
+    <div class="tbl full" data-source="recurring loans"><table><thead><tr><th></th><th class="num">Kuus</th><th class="num">Aastas</th></tr></thead><tbody data-draw="subscriptions_table"></tbody></table></div>
+  </div>
+  </section>
+  </div>
+
+  <div class="tabp t-invest" id="p-invest" data-feature="returns">
+  <section class="tiles" id="investtiles">
+    <div class="tile"><div class="lbl">Investeerid kuus</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Viimaste kuude (<span data-draw="window_months"></span>) keskmine summa, mille igal kuul investeerisid: aktsiate ostud miinus müügid ning pensionifondide sissemaksed.</p><p>Protsent näitab, mitu protsenti see on keskmisest kuutulust.</p><p>Võrdlus näitab, kui palju rohkem või vähem investeerid kuus kui samadel kuudel aasta varem (<span data-draw="window_prev"></span>).</p></div><div class="big" data-draw="metric" data-source="invest_total" data-field="value" data-where="metric=monthly_p4">—</div><div class="sub"><span data-draw="window_months"></span> keskmine, <span data-draw="pct1" data-source="invest_total" data-field="value" data-where="metric=rate_p4">—</span> tulust</div><div class="sub chg" data-draw="chg" data-source="invest_compare" data-where="metric=monthly" data-vs="vs aasta varem" data-suffix="Möödunud aastaga võrreldes"></div></div>
+    <div class="tile"><div class="lbl">Investeeritud kokku</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kogu raha, mille oled andmete algusest investeeringutesse pannud: aktsiate ostud miinus müügid ning pensionifondide sissemaksed. Fondidest välja võetud raha on maha arvatud.</p><p>Võrdlus näitab, kui palju rohkem või vähem oled sel aastal investeerinud kui terve eelmise aasta jooksul.</p></div><div class="big" data-draw="metric" data-source="invest_summary" data-field="value" data-where="metric=invested">—</div><div class="sub">Sissemaksed miinus väljavõtted</div><div class="sub chg" data-draw="chg" data-source="invest_compare" data-where="metric=stocks" data-kind="pair" data-suffix="Sel aastal möödunud aastaga võrreldes"></div></div>
+    <div class="tile"><div class="lbl">Väärtus kokku</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Aktsiate ja fondide väärtus praegu: aktsiad viimase sulgemishinnaga, fondid viimase osakuhinnaga.</p><p>Kasum on väärtus miinus investeeritud summa ja protsent on kasum investeeritud summast. Dividendid ei ole kasumis, need on eraldi kastis.</p><p>Võrdlus näitab muutust eelmise aasta lõpu väärtusega võrreldes. Selles on sees ka sel aastal juurde pandud raha, mitte ainult hinnatõus.</p></div><div class="big" data-draw="metric" data-source="invest_summary" data-field="value" data-where="metric=value">—</div><div class="sub">Kasum <span data-draw="signed" data-source="invest_summary" data-field="value" data-where="metric=profit">—</span>, <span data-draw="pctsigned" data-source="invest_summary" data-field="value" data-where="metric=profit_pct">—</span></div><div class="sub chg" data-draw="chg" data-source="invest_compare" data-where="metric=value" data-suffix="Aasta algusega võrreldes"></div></div>
+    <div class="tile"><div class="lbl">Dividendid</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Viimase 12 kuu jooksul arvele laekunud dividendid ja intress, tulumaks maha arvatud.</p><p>Võrdlus on selle aasta algusest viimase täiskuuni ja sama periood eelmisel aastal.</p></div><div class="big" data-draw="metric" data-source="invest_total" data-field="value" data-where="metric=div12">—</div><div class="sub">Viimased 12 kuud</div><div class="sub chg" data-draw="chg" data-source="invest_compare" data-where="metric=div" data-suffix="Möödunud aasta sama ajaga võrreldes"></div></div>
+    <div class="tile"><div class="lbl">Säästumäär</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kui suur osa tulust läheb säästmisse: investeeringud (aktsiad neto ja pensionifondid) ja laenude põhiosa tagasimakse. Laenumakse intress ei ole säästmine.</p><p>Põhiosa on laenude maksegraafikute järgi. Ennetähtaegsed tagastused ja maksegraafikuta laenud ei ole sees. Number on viimaste kuude (<span data-draw="window_months"></span>) keskmine, võrdlus eelmise sama pika ajaga. Säästumäär on jooksva aasta kohta.</p></div><div data-draw="savings" data-source="savings_rate"></div></div>
+  </section>
+  <section class="card" id="portfolio-change">
+    <h3>Tootlus <span class="htot" data-draw="returns_total" data-source="returns portfolio_change"></span></h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Aktsiate ja pensionifondide väärtuse muutus igal kuul, jagatud nagu instrumentide tabelis: <b>kapitali kasv</b> on hinnamuutus, <b>valuuta mõju</b> dollari kursi mõju USA aktsiatesse investeeritud summale, <b>tulud</b> dividendid ja intress (sh hoiuse neto intress) ja <b>kulud</b> tehingu- ja teenustasud. Punkt on kuu kogutootlus.</p><p>Sissemaksed ja väljavõtted ei ole tulpades. Hiirega tulba kohal näed neid ja väärtust kuu lõpus.</p></div>
+    <div class="chart" data-draw="portfolio_change_chart" data-source="portfolio_change"></div>
+    <div class="legend"><span><span class="sw" data-draw="sw0"></span>Kapitali kasv</span><span><span class="sw" data-draw="sw3"></span>Valuuta mõju</span><span><span class="sw" data-draw="sw2"></span>Tulud</span><span><span class="sw" data-draw="sw1"></span>Kulud</span><span><span class="sw" style="background: var(--color-fg); border-radius: 50%"></span>Kokku</span></div>
+  </section>
+  <section>
+    <div class="card" id="returns">
+      <h3>Instrumentide tootlus <span class="htot" data-draw="returns_total" data-source="returns portfolio_change"></span></h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Iga instrumendi tootlus valitud perioodil, jagatud nagu Portfellow's: <b>kapitali kasv</b> (hinnamuutus), <b>valuuta mõju</b> (dollari kurss USA aktsiatel), <b>tulud</b> (dividendid ja intress pärast kinnipeetud maksu) ja <b>kulud</b> (tehingu- ja teenustasud). Veerus Tootlus on kokku, tulp näitab jaotust.</p><p>Pealkirja juures on valitud perioodi kogutootlus. Protsendid (pealkirjas ja ridadel) on perioodi tootlus XIRR-i järgi, nagu Portfellow's: rahaga kaalutud tootlus, mis arvestab iga ostu, müügi ja dividendi suurust ja kuupäeva, teisendatud perioodi pikkuseks. Kui positsioon on vahepeal täielikult müüdud ja hiljem uuesti ostetud, arvutatakse iga hoidmisperiood eraldi ja tulemused korrutatakse kokku, nii et aja eest, mil aktsiat polnud, kasvu ei arvestata (seetõttu võivad need read Portfellow'st erineda). Pensionifondidel on rahavood kuude kaupa, hoiusel intress jagatud konto keskmise saldoga.</p><p>Fondid on sinisega, hoius (ainult neto intress) rohelisega, müüdud positsioonid heledamalt. Hiirega real näed jaotust ka koos instrumendi logoga.</p></div>
+      <div class="tbl full" data-source="returns logos"><table class="ttbl"><thead><tr><th data-tsort="name" aria-sort="none">Instrument</th><th class="num" data-tsort="qty" aria-sort="none">Kogus</th><th class="num" data-tsort="value" aria-sort="none">Väärtus</th><th class="num" data-tsort="price" aria-sort="none">Kapitali kasv</th><th class="num" data-tsort="fx" aria-sort="none">Valuuta mõju</th><th class="num" data-tsort="dividends" aria-sort="none">Tulud</th><th class="num" data-tsort="fees" aria-sort="none">Kulud</th><th class="num" data-tsort="total" aria-sort="descending">Tootlus</th><th class="wfh"></th></tr></thead><tbody data-draw="returns_table"></tbody></table></div>
+      <div class="legend"><span><span class="sw" data-draw="sw0"></span>Kapitali kasv</span><span><span class="sw" data-draw="sw3"></span>Valuuta mõju</span><span><span class="sw" data-draw="sw2"></span>Tulud</span><span><span class="sw" data-draw="sw1"></span>Kulud</span></div>
+    </div>
+  </section>
+  <section class="grid2">
+    <div class="card" id="comparison" data-feature="comparison">
+      <h3>Võrdlus indeksitega</h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Aktsiaportfelli tootlus võrreldes sellega, kui oleksid samad summad samadel kuudel pannud indeksisse. Protsendid on valitud perioodi tootlus XIRR-i järgi, nagu Instrumentide tootluses. III sammas ja hoius ei ole sees.</p><p><b>Vahe</b> on portfelli tootlus miinus indeksi oma: roheline tähendab, et portfell oli parem.</p><p>Võrdluse indeksid ja nende hinnaallikad on sinu instrumentide failis (indices). Hiirega nime kohal näed allikat.</p></div>
+      <div class="tbl full" data-source="comparison"><table class="ptab"><thead><tr><th></th><th class="num">Tootlus</th><th class="num">Vahe</th><th class="wfh"></th></tr></thead><tbody data-draw="comparison_table"></tbody></table></div>
+    </div>
+    <div class="card" id="expected-dividends" data-feature="expected_dividends">
+      <h3>Oodatavad dividendid <span class="htot" data-draw="div_total" data-source="expected_dividends"></span></h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Järgmise 12 kuu (alates jooksvast kuust) hinnanguline dividenditulu pärast maksu. Arvestatud on viimase 12 kuu dividende praeguse aktsiate kogusega: kui oled vahepeal juurde ostnud või müünud, on summa selle võrra muudetud.</p><p><b>Kinnitatud</b> (täisvärv) on välja kuulutatud dividendid (reeglites) praeguse kogusega. <b>Hinnang</b> (heledam) on ülejäänud: ettevõtted võivad dividendi muuta või ära jätta. Hiirega tulba kohal näed ettevõtteid.</p></div>
+      <div class="chart" data-draw="div_chart" data-source="expected_dividends" style="min-height: 220px"></div>
+      <div class="legend"><span><span class="sw" data-draw="sw2"></span>Kinnitatud</span><span><span class="sw" data-draw="sw2" style="opacity: .4"></span>Hinnang</span></div>
+    </div>
+  </section>
+  <section class="card" id="investchart" data-feature="investment_months">
+    <h3>Sissemaksed</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Iga kuu omast rahast investeeritud summa. <b>Aktsiad</b> on ostud miinus müügid: tulp allpool nulli tähendab, et sel kuul müüsid rohkem kui ostsid. <b>Pension</b> on pensionifondide sissemaksed. <b>Väljavõtted</b> on fondidest välja võetud raha.</p><p>Joon on andmete algusest kokku investeeritud summa: aktsiad ja pension koos, väljavõtted maha arvatud. Jooksva kuu hele punktiiriga tulp ja katkendjoon on kuu lõpu prognoos.</p><p>Tulud (dividendid ja intress) ja kapitali kasv ei ole sissemaksed, need on graafikul Tootlus.</p></div>
+    <div class="chart" data-draw="investchart" data-source="investment_months portfolio_change month_summary"></div>
+    <div class="legend"><span><span class="sw" data-draw="sw0"></span>Aktsiad</span><span><span class="sw" data-draw="sw2"></span>Pension</span><span><span class="sw" data-draw="sw3"></span>Väljavõtted</span><span><span class="sw" data-draw="sw4"></span>Investeeritud kokku</span></div>
+  </section>
+  <section class="grid2">
+    <div class="card" id="allocation" data-feature="portfolio">
+      <h3>Portfelli jaotus</h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Positsioonid, keskmiselt <b data-draw="metric" data-source="portfolio_total" data-field="value" data-where="metric=avg">—</b> igaüks. Suurim on <b data-draw="maxpos" data-source="portfolio">—</b>.</p><p>Jaotus on praeguse turuväärtuse järgi. Pensionifondid ei ole sees.</p></div>
+      <div class="tbl full" data-source="portfolio"><table class="ptab"><thead><tr><th>Riik</th><th class="num">Väärtus</th><th class="num">Osa</th><th class="wfh"></th></tr></thead><tbody data-draw="byregion"></tbody></table></div>
+      <div class="tbl full" data-source="portfolio" style="margin-top: var(--cds-gap-lg)"><table class="ptab"><thead><tr><th>Valdkond</th><th class="num">Väärtus</th><th class="num">Osa</th><th class="wfh"></th></tr></thead><tbody data-draw="bysector"></tbody></table></div>
+    </div>
+    <div class="card" id="pension" data-feature="pension_view">
+      <h3>Pension</h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>III sammas ja muud pensionifondid (vabatahtlikust fondist väljaspool III sammast tulumaksu tagasi ei saa). Prognoos: praegune väärtus ja kuu sissemakse <span data-draw="metric" data-source="pension_view" data-field="value" data-where="metric=contrib_month">—</span> kuni pensionieani, tootlus <span data-draw="goal_num" data-source="pension_view" data-where="metric=return" data-pct="1"></span> aastas; „ilma tootluseta“ on lihtsalt sisse makstud raha. Kuusumma on prognoos jagatud 20 aastale, ilma pensionieas jätkuva tootluseta. Riiklik pension (I sammas) ei ole sees.</p><p data-feature="pillar2_withdrawn">II sammas: välja võeti <span data-draw="metric" data-source="pension_view" data-field="value" data-where="metric=ii_withdrawn">—</span> (pärast tulumaksu). Uuesti saab liituda 10 aastat pärast lahkumist, aastal <span data-draw="goal_num" data-source="pension_view" data-where="metric=ii_rejoin_year" data-dec="0"></span>. Seni ei kogune II sambasse ei oma 2% ega riigi 4%.</p></div>
+      <table data-source="pension_view"><tbody data-draw="pension_table"></tbody></table>
+      <dl style="margin-top: var(--cds-gap-lg)">
+        <dt>Võlg vs investeering</dt><dd>Laenujääk <b data-draw="metric" data-source="loans_total" data-field="value" data-where="metric=balance">—</b> keskmise intressiga <b data-draw="pct1" data-source="loans_total" data-field="value" data-where="metric=avg_rate">—</b> maksab intressi ja tasusid <b data-draw="metric" data-source="loans_total" data-field="value" data-where="metric=interest">—</b> kuus. Portfell on <b data-draw="metric" data-source="portfolio_total" data-field="value" data-where="metric=value">—</b> ja dividendid viimase 12 kuu jooksul <b data-draw="metric" data-source="invest_total" data-field="value" data-where="metric=div12">—</b>.</dd>
+      </dl>
+    </div>
+  </section>
+  </div>
+
+  <div class="tabp t-loans" id="p-loans" data-feature="loans">
+  <section class="card" id="loan-burden">
+    <h3>Laenud ja liising</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kastid näitavad laenu- ja liisingumaksete osa perioodi tulust. All on aktiivsed laenud; kulukuse määr on krediidi kulukuse määr lepingust (intress ja tasud koos), hiirega numbri kohal näed lepingu intressi.</p><p>Klõpsa laenul, et näha lepingu andmeid. <b>Intress ja tasud kuus</b> on järgmise makse intress maksegraafikust pluss igakuised tasud; see raha ei vähenda laenujääki. Kõigi laenude ja liisingu jäägid on maksegraafikute järgi.</p></div>
+    <div class="tiles ltiles" data-draw="loanshare" data-source="trend_total"></div>
+    <div class="tbl full" data-source="loans loan_cost loan_cost_total loan_contracts"><table class="loans2">
+      <thead><tr><th>Laen</th><th class="num">Kuumakse</th><th class="num">Kulukuse määr</th><th class="num">Intress ja tasud kuus</th><th class="num">Jääk</th><th class="ctr">Lõpp</th></tr></thead>
+      <tbody data-draw="activeloans"></tbody>
+    </table></div>
+  </section>
+  </div>
+
+  <!-- Vara ja eesmärgid, 2. osa: netovara ning varad ja võlad -->
+  <div class="tabp t-goals o2">
+  <section class="grid2 g21">
+    <div class="card" id="assets" data-feature="assets">
+      <h3>Varad ja võlad</h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Aktsiad viimase sulgemishinnaga, pensionifondid viimase osakuhinnaga.</p><p>Hiirega rea nime kohal näed, kust summa pärineb.</p></div>
+      <div class="split">
+        <div><div class="lbl">Varad</div><div class="big" data-draw="metric" data-source="assets_total" data-field="value" data-where="metric=assets">—</div><table data-source="assets"><tbody data-draw="assets_table"></tbody></table></div>
+        <div><div class="lbl">Võlad</div><div class="big" data-draw="metric" data-source="assets_total" data-field="value" data-where="metric=debts">—</div><table data-source="assets"><tbody data-draw="debts_table"></tbody></table></div>
+      </div>
+    </div>
+    <div class="card" id="net-worth" data-feature="net_worth">
+    <h3>Netovara <span class="htot" data-draw="net_total" data-source="net_worth"></span></h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Varad miinus võlad iga kuu lõpus. <b>Varad</b> (roheline) ja <b>võlad</b> on need, mis on reeglites (worth) nimetatud. Joon on netovara. Pealkirja juures on praegune netovara ja muutus valitud perioodi algusest.</p><p>Liisinguga auto väärtus langeb igal kuul ühepalju ostuhinnast liisingu jääkväärtuseni: see langus on auto tegelik kulu. Lõppenud laenude jäägid (heledam osa) on hinnang: jääk on kõik hilisemad maksed kokku. Kuna maksete sees on ka intress, on need jäägid veidi suuremad kui tegelikult. Praeguste laenude jäägid on maksegraafikutest.</p></div>
+    <div class="chart" data-draw="net_chart" data-source="net_worth"></div>
+    <div class="legend"><span><span class="sw" data-draw="sw2"></span>Varad</span><span><span class="sw" data-draw="sw1"></span>Võlad</span><span><span class="sw" data-draw="sw1" style="opacity: .45"></span>Võlad, hinnang</span><span><span class="sw" style="background: var(--color-fg); border-radius: 50%"></span>Netovara</span></div>
+    </div>
+  </section>
+  </div>
+
+  <div class="tabp t-loans" data-feature="loans">
+  <section class="card" id="future">
+    <h3>Laenumaksete graafik</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Lepingujärgsed kuumaksed laenude kaupa (tulbad) ja kogu laenujääk kuu lõpus (joon, parem telg). Tulba tume osa on põhiosa, hele osa intress ja igakuised tasud: see osa väheneb, kui jääk väheneb. Tulp kaob, kui laen on tagasi makstud.</p><p>Liisingu jääkväärtus ja Euribori muutus ei ole sees.</p></div>
+    <div class="chart" data-draw="future_chart" data-source="future_loans future_balance"></div>
+    <div class="legend" data-draw="future_legend" data-source="future_loans"></div>
+  </section>
+  <section class="card" id="loan-cost">
+    <h3>Makstud intress ja tasud</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Makstud intress ja tasud aastate kaupa. Maksegraafikuga laenudel on makstud intress makse miinus jäägi vähenemine (liisingul graafiku intress) koos lepingu- ja haldustasudega. Maksegraafikuta krediidid: makstud miinus saadud, kogu hind on selle aasta all, mil krediit lõppes. Enne andmete algust võetud ja tagasi makstud laenude intress ei ole andmetes.</p></div>
+    <table data-source="loan_cost loan_cost_total"><thead><tr data-draw="cost_head"></tr></thead><tbody data-draw="cost_table"></tbody></table>
+  </section>
+  </div>
+
+  <div class="tabp t-tx" id="p-tx">
+  <section class="card" id="payees">
+    <h3>Kanded</h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kõik sissetulekud (+) ja väljaminekud (−) saaja või maksja kaupa, suurimad ees. Oma kontode vahelised ülekanded ei ole sees. Aktsiakonto ostud, müügid ja dividendid on grupis Investeeringud.</p><p>Klõpsa nimel, et näha ainult selle saaja gruppe ja kategooriaid. Nendel klõpsates näed kandeid. Veeru pealkirjal klõpsates saad järjestada.</p><p>Ainult tulud näed grupiga Tulud. Kollane „mitu“ tähendab, et saaja maksed on mitme kategooria all.</p></div>
+    <div class="pfilters">
+      <span class="selw srch"><input type="search" class="psearch" placeholder="Otsi saajat, maksjat, kategooriat või selgitust" aria-label="Otsi kandeid"><button type="button" class="selx" data-clear="q" aria-label="Tühjenda otsing" hidden>×</button></span>
+      <span class="selw"><select class="dash-select" data-draw="month_select" aria-label="Kuu" data-source="transactions"></select><button type="button" class="selx" data-clear="month" aria-label="Tühjenda kuu" hidden>×</button></span>
+      <span class="selw"><select class="dash-select" data-draw="group_select" aria-label="Grupp" data-source="transactions"></select><button type="button" class="selx" data-clear="grp" aria-label="Tühjenda grupp" hidden>×</button></span>
+      <span class="selw"><select class="dash-select" data-draw="category_select" aria-label="Kategooria" data-source="transactions"></select><button type="button" class="selx" data-clear="cat" aria-label="Tühjenda kategooria" hidden>×</button></span>
+    </div>
+    <div class="tbl ptbl" data-source="transactions">
+      <table>
+        <thead><tr><th data-sort="name" aria-sort="none">Saaja / maksja</th><th data-sort="grp" aria-sort="none">Grupp</th><th data-sort="cat" aria-sort="none">Kategooria</th><th class="num" data-sort="sum" aria-sort="descending">Summa</th><th class="num" data-sort="n" aria-sort="none">Tehinguid</th><th class="ctr" data-sort="date" aria-sort="none">Periood</th></tr></thead>
+        <tbody data-draw="payees_table"></tbody>
+      </table>
+    </div>
+  </section>
+  </div>
+
+  <!-- Vara ja eesmärgid, 4. osa -->
+  <div class="tabp t-goals o4 folds">
+  <section class="card" id="timeline" data-feature="events">
+    <input type="checkbox" class="cardt" id="fold-timeline"><h3><label for="fold-timeline">Suured sündmused</label></h3>
+    <div class="tl" data-draw="timeline" data-source="events"></div>
+  </section>
+  </div>
+
+  <!-- Tulud ja kulud, 2. osa -->
+  <div class="tabp t-spending folds">
+    <section class="card">
+      <input type="checkbox" class="cardt" id="fold-rules"><h3><label for="fold-rules">Reisid</label></h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kategooria Reisid ja spa kanded reiside kaupa, uuemad ees. <b>Algus</b> on reisi esimene päev ja <b>lõpp</b> viimase makse päev. Ette ostetud laeva- või hotellipiletid ja ülekanded on reisi kulus sees, aga algust ei muuda. <b>Kulu</b> on kõik reisi maksed kokku, tagastused ja teiste tagasimaksed maha arvatud.</p><p>Klõpsa reisil, et näha selle kandeid.</p></div>
+      <div class="tbl"><table data-source="trips trip_transactions">
+        <thead><tr><th>Reis</th><th class="ctr">Algus</th><th class="ctr">Lõpp</th><th class="num">Kulu</th></tr></thead>
+        <tbody data-draw="trips_table"></tbody></table></div>
+    </section>
+    <section class="card">
+      <input type="checkbox" class="cardt" id="fold-oneoffs"><h3><label for="fold-oneoffs">Ühekordsed tehingud</label></h3>
+      <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Kõik, mis ei lähe kuu tulemisse, uuemad ees: ühekordseks märgitud maksed (nt laenude ennetähtaegsed tagastused, liisingu sissemakse, suured ostud), saadud laenuraha ja ühekordne tulu.</p></div>
+      <div class="tbl"><table data-source="oneoffs" data-row-key="id">
+        <thead><tr><th data-field="date" class="ctr">Kuupäev</th><th data-field="what">Saaja / maksja</th><th data-field="type">Liik</th><th data-field="amount" class="num">Summa</th></tr></thead>
+        <tbody data-draw="oneoff_table"></tbody></table></div>
+    </section>
+  </div>
+
+  <!-- Vara ja eesmärgid, 5. osa -->
+  <div class="tabp t-goals o5 folds">
+    <section class="card">
+      <input type="checkbox" class="cardt" id="fold-trips"><h3><label for="fold-trips">Arvutuse alused</label></h3>
+      <dl>
+        <dt>Andmed</dt><dd>Pangaväljavõtted ja panga ühenduse kanded, investeeringute tehingud ja portfelli seis, fondide osakud ja hinnad. Kategooriad on saajate kaupa sinuga läbi vaadatud. Uued kanded lisanduvad, kui ütled Claude'ile „uuenda“.</dd>
+        <dt>Perioodid</dt><dd>Veergudes on pa poolaasta ja kv kvartal: kui valitud on mitu aastat, on veergudes poolaastad (I pa = jaan–juuni, II pa = juuli–dets), ühe aasta korral kvartalid. Pooleli oleva perioodi keskmine on kuni viimase täiskuuni. Kaardimaksed on igal pool arvestatud makse tegemise päeva järgi, mitte panga kirjendamise päeva järgi.</dd>
+        <dt>Korraline vahe</dt><dd>Tulud miinus kulud, korralised laenumaksed ja investeeringud. Ühekordne tulu, uus laenuraha ja ühekordsed maksed (nt laenude ennetähtaegsed tagastused, suured ostud) on eraldi.</dd>
+        <dt>Oma kontod</dt><dd>Oma kontode vahelised ülekanded ja krediitkaardi tagasimaksed ei ole tulu ega kulu.</dd>
+        <dt>Grupid</dt><dd>Kategooriad ja grupid on sinu reeglites. Investeeringud (aktsiate ostud miinus müügid, pensionifondide sissemaksed) on vahelehel Tulud ja kulud eraldi grupina ja arvatakse rea „Üle jääb“ arvutusest maha.</dd>
+        <dt>Investeeringud</dt><dd>Aktsiate neto ost on ostud miinus müügid (USA aktsiad ümber arvutatud tehingu aja kursiga).</dd>
+        <dt>Hinnad</dt><dd>Kuu viimase kauplemispäeva hinnad; fondidel viimane osakuhind. Ilma hinnata väärtpaberid on viimase tehingu hinnaga, nende hinnamuutus tuleb välja müügi kuul.</dd>
+      </dl>
+    </section>
+  </div>
+
+  <div class="tabp t-goals" id="p-goals">
+  <section class="tiles" id="goal-tiles">
+    <div class="tile" data-feature="goal_month_net"><div class="lbl">Kuu tulem <span data-draw="signed" data-source="goals" data-field="value" data-where="metric=net_target">—</span></div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Viimaste kuude (<span data-draw="window_months"></span>) keskmine kuu tulem pärast kulusid, laenumakseid ja investeeringuid. Ühekordsed maksed ei ole sees.</p><p>Siht on sinu reeglites. Selle kuu prognoos on vahelehelt Kuu.</p></div><div class="big" data-draw="signed_color" data-source="goals" data-field="value" data-where="metric=net_now">—</div><div data-draw="goal_progress" data-source="goals" data-now="net_now" data-target="net_target"></div><div class="sub">Sihini puudu <span data-draw="metric" data-source="goals" data-field="value" data-where="metric=net_gap">—</span> kuus</div><div class="sub">Selle kuu prognoos <span data-draw="signed_color" data-source="goals" data-field="value" data-where="metric=net_month">—</span></div></div>
+    <div class="tile" data-feature="assets goal_buffer"><div class="lbl">Puhver: <span data-draw="metric" data-source="goals" data-field="value" data-where="metric=buf_step">—</span>, siis kuu palk</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Puhvri konto seis. Esimene samm on reeglites, lõppsiht üks kuu palk: viimaste kuude keskmine kuutulu.</p><p>Puhver on ootamatute kulude jaoks, et neid ei peaks katma järelmaksu või arvelduskrediidiga. Arvelduskonto jääk on igapäevane raha, see ei ole puhver.</p></div><div class="big" data-draw="metric" data-source="goals" data-field="value" data-where="metric=buf_now">—</div><div data-draw="goal_progress" data-source="goals" data-now="buf_now" data-target="buf_step"></div><div class="sub">Esimese sammuni puudu <span data-draw="metric" data-source="goals" data-field="value" data-where="metric=buf_step_gap">—</span></div><div class="sub">Lõppsiht <span data-draw="metric" data-source="goals" data-field="value" data-where="metric=buf_target">—</span>, kuu sihi järgi kogudes <span data-draw="goal_int" data-source="goals" data-metric="buf_months">—</span> kuuga</div></div>
+    <div class="tile" data-feature="net_worth goal_net_worth"><div class="lbl">Netovara <span data-draw="signed" data-source="goals" data-field="value" data-where="metric=nw_target">—</span></div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Varad miinus võlad, vt graafik Netovara allpool. Siht ja alguspunkt on sinu reeglites. Riba näitab, kui suur osa teest alguspunktist on läbitud.</p></div><div class="big" data-draw="signed_color" data-source="goals" data-field="value" data-where="metric=nw_now">—</div><div data-draw="goal_progress" data-source="goals" data-now="nw_now" data-target="nw_target" data-base="nw_base"></div><div class="sub">Sihini puudu <span data-draw="metric" data-source="goals" data-field="value" data-where="metric=nw_gap">—</span></div></div>
+    <div class="tile" data-feature="loans goal_costly_loans"><div class="lbl">Kallid laenud</div><button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Reeglites nimetatud kallite laenude jääk maksegraafiku järgi.</p></div><div class="big" data-draw="metric" data-source="goals" data-field="value" data-where="metric=costly">—</div></div>
+  </section>
+  <section class="card" id="goal-chart" data-feature="cashflow">
+    <h3>Kuu tulem <span class="htot">prognoos <span data-draw="signed_color" data-source="cashflow_summary" data-field="value" data-where="metric=net_avg">—</span> kuus, 24 kuuga <span data-draw="signed" data-source="cashflow_summary" data-field="value" data-where="metric=net_total">—</span></span></h3>
+    <button type="button" class="help" aria-label="Selgitus">?</button><div class="note"><p>Iga kuu tulem pärast kulusid, laenumakseid ja investeeringuid (III sammas ja aktsiate ostud). Aktsiate müük tulemit ei suurenda. Ühekordsed maksed ei ole sees. Katkendjoon on kuu siht, pidev joon 12 kuu libisev keskmine. Jooksva kuu hele punktiiriga tulp on kuu lõpu prognoos; 12 kuu keskmises see ei ole.</p><p>Roheline tulp on sihi täitnud kuu, hall pluss alla sihi ja punane miinus. Ühekordne tulu ja uus laenuraha ei ole sees, need on vahelehel Tulud ja kulud (Ühekordsed tehingud).</p><p><b>Prognoos</b> (heledad tulbad) on järgmised 23 kuud: tulu, püsikulud ilma laenudeta ja muutuv kulu viimaste kuude (<span data-draw="window_months"></span>) tasemel; laenumaksed maksegraafikust, liisingu intress uue Euriboriga alates reeglites antud kuust (<span data-draw="goal_num" data-source="cashflow_summary" data-where="metric=euribor_old" data-dec="2"></span>% → <span data-draw="goal_num" data-source="cashflow_summary" data-where="metric=euribor_new" data-dec="2"></span>%, umbes <span data-draw="metric" data-source="cashflow_summary" data-field="value" data-where="metric=euribor_month">—</span> kuus rohkem); reisid aastaeelarvest; investeering kuus ja tulumaksutagastus reeglite järgi.</p><p>Ühekordseid makseid, uut laenuraha ega palgatõusu ei ole sees. Eeldused on sinu reeglites (forecast).</p></div>
+    <div class="chart" data-draw="goalchart" data-source="trend goals month_summary cashflow"></div>
+    <div class="legend"><span><span class="sw" data-draw="sw2"></span>Siht täidetud</span><span><span class="sw" style="background: var(--color-fg-muted); opacity: .6"></span>Pluss, alla sihi</span><span><span class="sw" style="background: var(--cds-chart-status-critical)"></span>Miinus</span><span><span class="sw" style="background: var(--cds-chart-status-critical); opacity: .4"></span>Prognoos</span><span><span class="sw" data-draw="sw0"></span>12 kuu keskmine</span></div>
+  </section>
+  </div>
+
+  <!-- Vara ja eesmärgid, 3. osa -->
+  <div class="tabp t-goals o3">
+  <section class="grid2 g21">
+  <div class="card" id="plan">
+    <h3>Plaan</h3>
+    <ol class="steps">
+      <li><span class="sn">1</span><div><div class="st">Sinu esimene samm</div><div class="sd">Kirjuta siia oma plaan. Muuda teksti pliiatsiga või palu Claude'il see koos sinuga kirja panna.</div></div></li>
+    </ol>
+  </div>
+  <div class="card" id="rules">
+    <h3>Reeglid</h3>
+    <ul class="rules">
+      <li><div class="st">Sinu reegel</div><div class="sd">Kirjuta siia reeglid, mida tahad rahaasjades järgida.</div></li>
+    </ul>
+  </div>
+  </section>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="calc.js"></script>
+<script src="draw.js"></script>

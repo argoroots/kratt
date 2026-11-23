@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kratt – Claude'i oskused masintikkimiseks</title>
-<meta name="description" content="STITCH-O-MATIC, Tikandikogu ja Tikand Entusse: Claude'i oskused tikkimisfailide tegemiseks ja tikandimustrite korrastamiseks.">
+<title>Kratt – Claude'i oskused</title>
+<meta name="description" content="STITCH-O-MATIC, Tikandikogu, Tikand Entusse ja Rahapada: Claude'i oskused tikkimiseks ja rahaasjade jaoks.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,6 +38,8 @@
   header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--s1) var(--s3); padding-bottom: 12px; margin-bottom: var(--s4); border-bottom: 1px solid var(--line); }
   h1 { margin: 0; font-size: 44px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; }
   .tagline { margin: 0; color: var(--muted); font-size: 16px; }
+  .intro { margin: 0 0 var(--s4); }
+  .intro p { margin: 0 0 12px; }
 
   .skill { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 var(--s3); transition: box-shadow .2s; }
   .skill[open] { box-shadow: 0 8px 30px light-dark(rgba(27, 31, 42, .07), rgba(0, 0, 0, .35)); }
@@ -92,6 +94,58 @@
     <p class="tagline">by Argo Roots</p>
   </header>
 
+  <section class="intro">
+    <p>Kratt on eesti muistendites peremehe abiline, kes teeb ära talle antud töö. Need <b>Claude'i oskused</b> (skill) teevad Claudest samasuguse abilise kindla töö jaoks. Oskus on juhend koos skriptidega: paigalda see Claude'ile, ütle, mida tahad, ja Claude teeb töö sinuga koos samm-sammult.</p>
+    <p>Ava oskus, et näha, mida see teeb, mida on vaja, kuidas see paigaldada ja mida Claude'ile öelda. Mitteäriliseks kasutamiseks on oskused vabad (litsents lehe all).</p>
+  </section>
+
+  <details class="skill" id="rahapada">
+    <summary>
+      <h2>Rahapada</h2>
+      <p class="summary">Isiklik rahaasjade töölaud sinu pangakannetest: näed, kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad.</p>
+    </summary>
+    <div class="body">
+      <section>
+        <h3>Mis see on</h3>
+        <p>Rahapada on muistendite aardepada: kus maa all raha peidus, seal nähti öösiti tuld põlemas. See oskus loeb sinu pangakanded (panga ühendusest või väljavõtte failist), jagab need lihtsatesse gruppidesse ja teeb neist töölaua, mida näed ainult sina. Kui ütled „uuenda“, toob Claude uued kanded ja töölaud arvutab kõik uuesti.</p>
+        <p>Valmis kategooriaid pole: Claude vaatab sinu kanded läbi, pakub nende järgi välja lihtsad grupid ja kategooriad ning küsib, mida muuta. Sinu otsused jäävad reeglitesse ja kehtivad edaspidi.</p>
+      </section>
+
+      <section>
+        <h3>Mida see oskab</h3>
+        <ul>
+          <li><b>Kuu:</b> tulud ja kulud seni, püsimaksed (makstud ja ootel) ja prognoos kuu lõpuks koos vahemikuga. Prognoos arvestab palgapäeva.</li>
+          <li><b>Tulud ja kulud:</b> gruppide trend, keskmine poolaastate või kvartalite kaupa, püsikulud, tellimused, reisid ja ühekordsed tehingud.</li>
+          <li><b>Investeeringud:</b> aktsiate ja fondide tootlus, dividendid, võrdlus indeksitega, portfelli jaotus ja pension. Eesti pensionifondide osakuhinnad tulevad ise.</li>
+          <li><b>Laenud:</b> maksed, laenude hind, maksegraafik ja Euriboriga laenu intressi muutus.</li>
+          <li><b>Vara ja eesmärgid:</b> varad ja võlad, netovara, 24 kuu prognoos, sinu eesmärgid ja plaan.</li>
+          <li><b>Kanded</b> kuu, grupi ja kategooria filtriga. Aastaid saab nuppudega sisse ja välja lülitada.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Mida on vaja</h3>
+        <ul>
+          <li>Claude'i rakendus, kus koodi käivitamine ja artefaktid on sisse lülitatud.</li>
+          <li>Panga ühendus Claude'is (nt LHV) või väljavõtte fail internetipangast (camt.053 XML või CSV).</li>
+        </ul>
+        <p class="note">Andmed on kahes sinu Claude'i artefaktis: töölaud ja hoidla. Mõlemad on privaatsed, kuni sa neid ise jagad; hoidlat ära jaga. Claude ainult loeb pangast, makseid ta ei tee. Claude ei ole finantsnõustaja.</p>
+      </section>
+
+      <section>
+        <h3>Paigaldamine</h3>
+        <p>Kopeeri see käsk Claude'ile või oma agendile:</p>
+        <div class="cmd"><code>Paigalda kratt.roots.ee/rahapada</code><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+        <p class="note">Ta juhendab sind edasi samm-sammult.</p>
+      </section>
+
+      <section>
+        <h3>Kasutamine</h3>
+        <div class="example"><span>„Tee mulle rahaasjade töölaud. Mul on LHV arveldus ja krediitkaart.“</span><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+      </section>
+    </div>
+  </details>
+
   <details class="skill" id="stitch-o-matic">
     <summary>
       <h2>STITCH-O-MATIC</h2>
@@ -108,7 +162,7 @@
       <section>
         <h3>Mida see oskab</h3>
         <ul>
-          <li><b>Masin:</b> Brother (PES) ja Janome (JEF). Raami suuruse kontroll on Brother Innov-is V3 (300 × 180 mm) ja Janome Memory Craft 550E (200 × 360 mm) järgi.</li>
+          <li><b>Masin:</b> Brother (PES) ja Janome (JEF). Kontrollib, et tikand mahub sinu masina raami – ütle masina mudel või raami suurus.</li>
           <li><b>Tekst ja kitsad kujundid</b> satiinis, <b>laiad alad</b> täidisena, <b>ümarad kujundid</b> kontuuritäitena.</li>
           <li><b>Aplikatsioon</b> ja <b>ristpiste</b>.</li>
           <li><b>Mitu värvi ja mitu suurust</b> korraga, soovi korral täpselt soovitud mõõdus.</li>
@@ -210,7 +264,7 @@
       <section>
         <h3>Mida see oskab</h3>
         <ul>
-          <li><b>Masin:</b> Brother Innov-is V3 (PES) või Janome Memory Craft 550E (JEF + JBF).</li>
+          <li><b>Masin:</b> Brother (PES) või Janome (JEF + JBF). Ütle masina mudel või failivorming ja raami suurus.</li>
           <li><b>Kategooriad</b> (nt Loomad, Lilled) – sinu omad või Claude pakub välja.</li>
           <li><b>Ühtsed failinimed</b> koos suurusega mm-des, nt <code>Kass 102</code>. Sama nimega erinevad mustrid saavad tähed A, B, C.</li>
           <li><b>Raam:</b> mustrid, mis masina raami ei mahu, jäetakse välja ja loetletakse.</li>
@@ -246,7 +300,7 @@
   </footer>
 <script>
 {
-  // open the skill named in the address (#stitch-o-matic, #tikandikogu, #tikand-entusse)
+  // open the skill named in the address (#stitch-o-matic, #tikandikogu, #tikand-entusse, #rahapada)
   const openFromHash = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS') d.open = true; };
   openFromHash(); window.addEventListener('hashchange', openFromHash);
 
