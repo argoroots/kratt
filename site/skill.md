@@ -41,41 +41,28 @@ Uuendused: `claude plugin marketplace update kratt`, siis `claude plugin update 
 
 ## Claude (claude.ai, töölaua- ja mobiilirakendus)
 
-Siin ei saa sa oskust ise paigaldada: ZIP-i laeb üles kasutaja. Sinu töö on teha see talle võimalikult lihtsaks. Juhenda samm-sammult, üks samm korraga, ja oota iga sammu järel, et kasutaja ütleks, et see on tehtud või mis takerdus.
+Kui töötad Claude'i rakenduses, ära küsi, kuhu paigaldada – kasuta seda juhendit. Menüüde nimed on ingliskeelsed, nagu Claude'i rakenduses: kirjuta need samamoodi (ka eestikeelses vastuses), et kasutaja leiaks need üles. Oskuse laeb üles kasutaja ise. Ära tee ZIP-i ise, ära lisa faili ega proovi brauseriga üles laadida: anna lihtsalt link ja juhend, **ühe vastusena**:
 
-1. **ZIP.** Anna oskuse ZIP-i link (ainult selle oskuse, mida ta paigaldab):
+1. Lae alla: (ainult see oskus, mida ta paigaldab)
    - STITCH-O-MATIC: https://kratt.roots.ee/stitch-o-matic.zip
    - Tikand Entusse: https://kratt.roots.ee/tikand-entusse.zip
    - Tikandikogu: https://kratt.roots.ee/tikandikogu.zip
 
-   Ütle, et ZIP-i ei pea lahti pakkima.
-2. **Koodi käivitamine.** Seaded → **Capabilities**: koodi käivitamine ja failide loomine peab olema sees. Kui on juba sees, mine edasi.
-3. **Üleslaadimine.** **Customize → Skills** → „+" → **Create skill** → **Upload a skill** → vali alla laaditud ZIP.
-4. **Kontroll.** Oskus peab nüüd olema oskuste nimekirjas ja sisse lülitatud.
+   ZIP-i ei pea lahti pakkima.
+2. **Settings → Capabilities:** lülita sisse koodi käivitamine ja failide loomine (kui pole juba sees).
+3. **Customize → Skills** → „+" → **Create skill** → **Upload a skill** → vali alla laaditud ZIP.
+4. Valmis: oskus on nimekirjas ja sisse lülitatud. Proovi uues vestluses.
 
-Team- ja Enterprise-plaanil peab organisatsiooni omanik oskused enne lubama; kui kasutaja ei leia Skills-osa, ütle seda.
-
-Kui menüü nimi kasutaja ekraanil erineb, küsi, mida ta näeb, ja juhata selle järgi – ära arva.
+Team- ja Enterprise-plaanil peab organisatsiooni omanik oskused enne lubama. Kui kasutaja ütleb, et miski ei klapi (nt menüü nimi on teine), küsi, mida ta näeb, ja aita edasi.
 
 ## Tikand Entusse: Entu ühendus
 
-Kui kasutaja paigaldab Tikand Entusse, kontrolli pärast oskuse paigaldamist, kas Entu MCP on ühendatud: sinu tööriistade seas on Entu tööriistad (nimes „Entu“, nt `search_entities`, `get_entity`, `add_file`). Kui on, ütle seda ja oled valmis.
+Tikand Entusse vajab Claude'is Entu ühendust. Vaata, kas sinu tööriistade seas on Entu tööriistad (nimes „Entu“, nt `search_entities`). Kui on, pole midagi vaja teha. Kui ei ole, lisa samasse vastusesse:
 
-Kui ei ole, juhenda kasutajat samm-sammult, üks samm korraga:
+- **Claude'i rakendus:** **Customize → Connectors** → „+" → **Add custom connector** → nimi `Entu`, aadress `https://mcp.entu.app` → **Add** → **Connect**, logi Entusse sisse ja vali andmebaasid.
+- **Claude Code:** `claude mcp add --transport http entu https://mcp.entu.app`, siis logi brauseris Entusse sisse.
 
-**Claude'i rakendus (claude.ai, töölaud):**
-1. **Customize → Connectors** → „+“ → **Add custom connector**.
-2. Nimi `Entu`, aadress `https://mcp.entu.app` → **Add**.
-3. **Connect** → logi Entusse sisse ja märgi andmebaasid, mida Claude tohib kasutada.
-4. Uues vestluses peab Entu konnektor olema sisse lülitatud.
-
-**Claude Code:**
-```bash
-claude mcp add --transport http entu https://mcp.entu.app
-```
-Seejärel logi brauseris Entusse sisse.
-
-Täpsem juhend: https://entu.ee/configuration/mcp/. Claude'il on ainult kasutaja enda Entu õigused. Kui menüü nimed kasutaja ekraanil erinevad, küsi, mida ta näeb.
+Täpsem juhend: https://entu.ee/configuration/mcp/
 
 ## Teised agendid (Codex, Cursor jt)
 

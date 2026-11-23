@@ -47,12 +47,13 @@ Claude pakub iga kujundi juures sobiva tehnika välja ja ütleb, miks. Otsuse te
 
 ## Paigaldamine
 
-**Claude'i rakendus (veeb, töölaud):**
-1. Tee kaustast `stitch-o-matic` ZIP-fail. Paki kaust ise, mitte selle sisu: ZIP-i sees peab olema `stitch-o-matic/SKILL.md`.
-2. Ava *Customize → Skills*, vajuta „+“ ja lae ZIP üles.
-3. Lülita skill sisse. Koodi käivitamine ja failide loomine peab olema lubatud.
+Kopeeri see käsk Claude'ile või oma agendile:
 
-**Claude Code:** kopeeri kaust `stitch-o-matic` kausta `~/.claude/skills/`.
+```
+Set up kratt.roots.ee/skill.md – STITCH-O-MATIC
+```
+
+Ta juhendab sind edasi samm-sammult. Vaata ka [kratt.roots.ee](https://kratt.roots.ee).
 
 ## Kuidas käib
 
