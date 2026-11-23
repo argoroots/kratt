@@ -18,6 +18,10 @@ Viib valmis tikandi koos failide ja eelvaatega sinu Entu andmebaasi, loob vajadu
 
 Korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.
 
+## Leivast redel
+
+Claude võtab muistendite kratti moodi ette võimatu ülesande, näiteks teha leivast redel.
+
 ## Paigaldamine
 
 Kopeeri see käsk Claude'ile või oma agendile:
@@ -27,6 +31,7 @@ Paigalda kratt.roots.ee/rahapada
 Paigalda kratt.roots.ee/stitch-o-matic
 Paigalda kratt.roots.ee/tikand-entusse
 Paigalda kratt.roots.ee/tikandikogu
+Paigalda kratt.roots.ee/leivast-redel
 ```
 
 Ta juhendab sind edasi samm-sammult.

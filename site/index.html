@@ -18,6 +18,7 @@
     color-scheme: light dark;
     --bg: light-dark(#f2f3f5, #14161c);
     --card: light-dark(#ffffff, #1c1f27);
+    --card-soft: light-dark(#f9f9fa, #181a21);
     --ink: light-dark(#1b1f2a, #e9ebf0);
     --muted: light-dark(#5d6473, #a3a9b6);
     --line: light-dark(#e2e4e8, #2d313b);
@@ -42,6 +43,7 @@
   .intro p { margin: 0 0 12px; }
 
   .skill { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 var(--s3); transition: box-shadow .2s; }
+  #leivast-redel { background: var(--card-soft); }
   .skill[open] { box-shadow: 0 8px 30px light-dark(rgba(27, 31, 42, .07), rgba(0, 0, 0, .35)); }
   .skill > summary { list-style: none; cursor: pointer; padding: 28px 72px 28px 32px; position: relative; border-radius: 16px; }
   .skill > summary::-webkit-details-marker { display: none; }
@@ -294,13 +296,39 @@
     </div>
   </details>
 
+  <details class="skill" id="leivast-redel">
+    <summary>
+      <h2>Leivast redel</h2>
+      <p class="summary">Kui tööd on otsas, anna Claude'ile nagu kratile võimatu ülesanne, näiteks tee leivast redel.</p>
+    </summary>
+    <div class="body">
+      <section>
+        <h3>Mis see on</h3>
+        <p>Muistendites tahtis kratt kogu aeg tööd. Kui peremehel ülesanded otsa said, muutus kratt ohtlikuks, ja temast lahti saamiseks anti talle võimatu töö – näiteks teha leivast redel.</p>
+        <p>Kui sul Claude'ile päris tööd pole, anna talle sama ülesanne. Selle oskusega võtab Claude selle ette nagu kratt: pusib selle kallal, proovib aina uusi viise, põhjendab, miks need ei toimi, ja küsib sinult nõu. Lõpuks kratt plahvatab või läheb põlema ning Claude selgitab muistendit.</p>
+      </section>
+
+      <section>
+        <h3>Paigaldamine</h3>
+        <p>Kopeeri see käsk Claude'ile või oma agendile:</p>
+        <div class="cmd"><code>Paigalda kratt.roots.ee/leivast-redel</code><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+        <p class="note">Ta juhendab sind edasi samm-sammult.</p>
+      </section>
+
+      <section>
+        <h3>Kasutamine</h3>
+        <div class="example"><span>„Kratt, tee mulle leivast redel.“</span><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+      </section>
+    </div>
+  </details>
+
 </main>
   <footer>
     <a href="https://github.com/argoroots/kratt">Lähtekood GitHubis</a> · Litsents <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.et">CC BY-NC-SA 4.0</a> · Agendile: <a href="/llms.txt">llms.txt</a>
   </footer>
 <script>
 {
-  // open the skill named in the address (#stitch-o-matic, #tikandikogu, #tikand-entusse, #rahapada)
+  // open the skill named in the address (#rahapada, #stitch-o-matic, #tikand-entusse, #tikandikogu, #leivast-redel)
   const openFromHash = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS') d.open = true; };
   openFromHash(); window.addEventListener('hashchange', openFromHash);
 

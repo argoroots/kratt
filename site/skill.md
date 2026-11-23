@@ -1,16 +1,17 @@
 ---
 name: kratt
-description: Kasuta, kui kasutaja palub paigaldada või seadistada kratt.roots.ee/skill.md (nt „Paigalda kratt.roots.ee/skill.md – …“ või „Set up kratt.roots.ee/skill.md“) või paigaldada Krati oskused STITCH-O-MATIC, Tikand Entusse, Tikandikogu või Rahapada.
+description: Kasuta, kui kasutaja palub paigaldada või seadistada kratt.roots.ee/skill.md (nt „Paigalda kratt.roots.ee/skill.md – …“ või „Set up kratt.roots.ee/skill.md“) või paigaldada Krati oskused Rahapada, STITCH-O-MATIC, Tikand Entusse, Tikandikogu või Leivast redel.
 ---
 
 # Kratt – oskuste paigaldamine
 
-Kratt on neli Claude'i oskust (skilli): üks rahaasjade jaoks ja kolm masintikkimiseks:
+Kratt on viis Claude'i oskust (skilli): üks rahaasjade jaoks, kolm masintikkimiseks ja Leivast redel:
 
 - **Rahapada** (`rahapada`) – isiklik rahaasjade töölaud (Claude'i Data töölaud) kasutaja pangakannetest: kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad. Grupid ja kategooriad pakub Claude kasutaja kannete järgi. Kanded tulevad panga ühendusest (nt LHV) või väljavõtte failist (camt.053 XML või CSV).
 - **STITCH-O-MATIC** (`stitch-o-matic`) – teeb vektorpildist (SVG) tikkimisfailid Brotherile (PES) ja Janomele (JEF) mitmes suuruses, kontrollib neid ja teeb 1:1 projekti-PDF-i.
 - **Tikand Entusse** (`tikand-entusse`) – viib valmis tikandi kasutaja Entu andmebaasi. Vajab Claude'is Entu ühendust (MCP, server `https://mcp.entu.app`); kui seda pole, juhenda kasutajat see enne lisama: https://entu.ee/configuration/mcp/
 - **Tikandikogu** (`tikandikogu`) – korrastab tikandimustrite kausta masinale sobivaks koguks (kategooriad, ühtsed nimed, eelvaated, kataloogi PDF).
+- **Leivast redel** (`leivast-redel`) – Claude võtab muistendite kratti moodi ette võimatu ülesande ja selgitab muistendit. Tööriistu ega pakette ei vaja.
 
 Lähtekood: https://github.com/argoroots/kratt (litsents CC BY-NC-SA 4.0).
 
@@ -33,6 +34,7 @@ Vastus:
    - STITCH-O-MATIC: https://kratt.roots.ee/stitch-o-matic.zip
    - Tikand Entusse: https://kratt.roots.ee/tikand-entusse.zip
    - Tikandikogu: https://kratt.roots.ee/tikandikogu.zip
+   - Leivast redel: https://kratt.roots.ee/leivast-redel.zip
 
    ZIP-i ei pea lahti pakkima.
 2. **Settings → Capabilities:** lülita sisse koodi käivitamine ja failide loomine (kui pole juba sees).
@@ -51,9 +53,10 @@ claude plugin install rahapada@kratt
 claude plugin install stitch-o-matic@kratt
 claude plugin install tikand-entusse@kratt
 claude plugin install tikandikogu@kratt
+claude plugin install leivast-redel@kratt
 ```
 
-Pythoni paketid (Tikand Entusse ei vaja ühtegi):
+Pythoni paketid (Tikand Entusse ja Leivast redel ei vaja ühtegi):
 
 ```bash
 # Rahapada: lisapakette pole vaja
@@ -84,7 +87,7 @@ Kui sinu keskkond toetab Agent Skills vormingut (kaust, milles on `SKILL.md`):
 git clone https://github.com/argoroots/kratt.git
 ```
 
-Kopeeri vajalikud kaustad (`kratt/rahapada`, `kratt/stitch-o-matic`, `kratt/tikand-entusse`, `kratt/tikandikogu`) oma keskkonna oskuste kausta. Vaata selle keskkonna enda dokumentatsioonist, kus see kaust on – ära arva. Paigalda ülal nimetatud Pythoni paketid.
+Kopeeri vajalikud kaustad (`kratt/rahapada`, `kratt/stitch-o-matic`, `kratt/tikand-entusse`, `kratt/tikandikogu`, `kratt/leivast-redel`) oma keskkonna oskuste kausta. Vaata selle keskkonna enda dokumentatsioonist, kus see kaust on – ära arva. Paigalda ülal nimetatud Pythoni paketid.
 
 ## Kontroll
 

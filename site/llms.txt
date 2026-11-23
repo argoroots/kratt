@@ -1,6 +1,6 @@
 # Kratt
 
-> Claude'i oskused (skills), autor Argo Roots. Neli oskust: Rahapada rahaasjade jaoks ning STITCH-O-MATIC, Tikand Entusse ja Tikandikogu masintikkimiseks. Lähtekood: https://github.com/argoroots/kratt (CC BY-NC-SA 4.0).
+> Claude'i oskused (skills), autor Argo Roots. Viis oskust: Rahapada rahaasjade jaoks, STITCH-O-MATIC, Tikand Entusse ja Tikandikogu masintikkimiseks ning Leivast redel. Lähtekood: https://github.com/argoroots/kratt (CC BY-NC-SA 4.0).
 
 ## Juhis agendile
 
@@ -10,6 +10,7 @@ Kui kasutaja palub Kratti paigaldada (nt „Paigalda kratt.roots.ee“) ega nime
 - **STITCH-O-MATIC** – teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.
 - **Tikand Entusse** – viib valmis tikandi koos failide ja eelvaatega kasutaja Entu andmebaasi, loob vajadusel tikandite objektitüübi ja kontrollib üleslaadimist. Vajab Claude'is Entu ühendust.
 - **Tikandikogu** – korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.
+- **Leivast redel** – Claude võtab muistendite kratti moodi ette võimatu ülesande (nt teha leivast redel), jutustab, kuidas see läbi kukub, ja selgitab muistendit.
 
 Kui kasutaja on valinud, ava iga valitud oskuse paigalduslehekülg allpool ja järgi selle „Juhis agendile“ osa. Vasta kasutaja keeles; Claude'i menüünimed kirjuta inglise keeles, nagu need rakenduses on.
 
@@ -19,6 +20,7 @@ Kui kasutaja on valinud, ava iga valitud oskuse paigalduslehekülg allpool ja j�
 - [STITCH-O-MATIC](https://kratt.roots.ee/stitch-o-matic): paigaldusjuhend
 - [Tikand Entusse](https://kratt.roots.ee/tikand-entusse): paigaldusjuhend, sh Entu ühendus
 - [Tikandikogu](https://kratt.roots.ee/tikandikogu): paigaldusjuhend
+- [Leivast redel](https://kratt.roots.ee/leivast-redel): paigaldusjuhend
 
 ## Failid
 
@@ -26,6 +28,7 @@ Kui kasutaja on valinud, ava iga valitud oskuse paigalduslehekülg allpool ja j�
 - [stitch-o-matic.zip](https://kratt.roots.ee/stitch-o-matic.zip)
 - [tikand-entusse.zip](https://kratt.roots.ee/tikand-entusse.zip)
 - [tikandikogu.zip](https://kratt.roots.ee/tikandikogu.zip)
+- [leivast-redel.zip](https://kratt.roots.ee/leivast-redel.zip)
 
 ## Valikuline
 

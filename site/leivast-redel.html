@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leivast redel – paigaldamine | Kratt</title>
+<meta name="description" content="Kui tööd on otsas, anna Claude'ile nagu kratile võimatu ülesanne, näiteks tee leivast redel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+  /* VOICE  calm, practical, like a good sewing-shop leaflet
+     IDEA   each skill is a card you open like a pattern envelope
+     COLOUR neutral grey ground, white cards, one thread blue (#102694, the logo's own thread)
+     TYPE   Figtree; four sizes: 44 / 22 / 16 / 14 (subheads 18)
+     LAYOUT one 720px column, generous rhythm: 8 / 16 / 24 / 48 */
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#f2f3f5, #14161c);
+    --card: light-dark(#ffffff, #1c1f27);
+    --ink: light-dark(#1b1f2a, #e9ebf0);
+    --muted: light-dark(#5d6473, #a3a9b6);
+    --line: light-dark(#e2e4e8, #2d313b);
+    --accent: light-dark(#102694, #8fa2ff);
+    --accent-soft: light-dark(#eef0fa, #252b45);
+    --code: light-dark(#f2f3f5, #252833);
+    --s1: 8px; --s2: 16px; --s3: 24px; --s4: 48px;
+  }
+  :root[data-theme=light] { color-scheme: light; }
+  :root[data-theme=dark] { color-scheme: dark; }
+  * { box-sizing: border-box; min-width: 0; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.65 Figtree, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: clamp(40px, 8vw, 88px) 20px var(--s4); flex: 1 0 auto; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  p { margin: 0 0 var(--s2); }
+  p:last-child { margin-bottom: 0; }
+
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--s1) var(--s3); padding-bottom: 12px; margin-bottom: var(--s4); border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 44px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; }
+  .tagline { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .skill { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 var(--s3); transition: box-shadow .2s; }
+  .skill[open] { box-shadow: 0 8px 30px light-dark(rgba(27, 31, 42, .07), rgba(0, 0, 0, .35)); }
+  .skill > summary { list-style: none; cursor: pointer; padding: 28px 72px 28px 32px; position: relative; border-radius: 16px; }
+  .skill > summary::-webkit-details-marker { display: none; }
+  .skill > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .skill > summary::before { content: ""; position: absolute; right: 28px; top: 32px; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); }
+  .skill > summary::after { content: ""; position: absolute; right: 39px; top: 42px; width: 7px; height: 7px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); transition: transform .2s; }
+  .skill[open] > summary::after { top: 40px; transform: rotate(45deg); }
+  h2 { margin: 0 0 var(--s1); font-size: 22px; line-height: 1.3; font-weight: 700; }
+  .summary { color: var(--muted); margin: 0; }
+
+  .body { padding: var(--s4) 32px 40px; border-top: 1px solid var(--line); }
+  section + section { margin-top: var(--s4); }
+  h3 { margin: 0 0 12px; font-size: 18px; line-height: 1.35; font-weight: 700; color: var(--accent); }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { position: relative; padding-left: 22px; margin: 0 0 10px; }
+  li:last-child { margin-bottom: 0; }
+  li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 8px; height: 2px; border-radius: 1px; background: var(--accent); }
+  b { font-weight: 600; }
+
+  code { font: 500 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code); padding: 2px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+  .cmd, .example { display: flex; align-items: center; gap: var(--s1); background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 6px 6px 6px 20px; margin: 0 0 var(--s2); }
+  .cmd code { flex: 1; background: none; padding: 10px 0; }
+  .example span { flex: 1; padding: 10px 0; }
+  .example { margin: 0; }
+  .copy { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+  .copy:hover { background: light-dark(rgba(16, 38, 148, .08), rgba(255, 255, 255, .08)); color: var(--accent); }
+  .copy:focus-visible { outline: 2px solid var(--accent); }
+  .copy.done { color: #1f8a43; }
+  .note { color: var(--muted); font-size: 14px; }
+
+  footer { flex: none; padding: var(--s3) 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    h1 { font-size: 36px; }
+    .skill > summary { padding: 24px 60px 24px 20px; }
+    .skill > summary::before { right: 18px; top: 26px; }
+    .skill > summary::after { right: 29px; top: 36px; }
+    .skill[open] > summary::after { top: 34px; }
+    .body { padding: 32px 20px; }
+    .cmd, .example { padding-left: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .lead { font-size: 18px; margin: 0 0 var(--s4); }
+  main > section + section { margin-top: var(--s4); }
+  ol { margin: 0; padding-left: 22px; }
+  ol li { margin: 0 0 12px; }
+  pre { background: var(--code); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin: 0; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  .tagline a { color: inherit; }
+  .agent { background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 20px 24px; }
+  .agent p { font-size: 15px; }
+  ol li { padding-left: 4px; }
+  ol li::before { content: none; }
+  ol + .note { margin-top: var(--s2); }
+  pre { white-space: pre-wrap; word-break: break-word; }
+
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Leivast redel</h1>
+    <p class="tagline"><a href="/">Kratt</a> by Argo Roots</p>
+  </header>
+
+  <p class="lead">Kui tööd on otsas, anna Claude'ile nagu kratile võimatu ülesanne, näiteks tee leivast redel.</p>
+
+  <section class="agent">
+    <h3>Juhis agendile</h3>
+    <p>Kasutaja palus selle oskuse paigaldada. <b>Ära küsi, kuhu või kuidas paigaldada.</b> Kui sa ei tööta Claude Code'i terminalis, oled Claude'i rakenduses (claude.ai, töölaud või telefon): anna kasutajale kohe, ühe vastusena, allpool oleva lingi ja sammudega juhend – tema keeles, menüünimed inglise keeles nagu rakenduses. Oskuse laeb üles kasutaja ise. Ära esita valikuid, ära kasuta brauserit ega arvuti juhtimist, ära paku oskuse salvestamise kaarti (sellest jääksid skriptid välja) ega tee ZIP-i ise. Claude Code'is käivita allpool olevad käsud.</p>
+  </section>
+
+  <section>
+    <h3>Paigaldamine Claude'i rakenduses (claude.ai, töölaud, telefon)</h3>
+    <ol>
+      <li><b>Lae alla:</b> <a href="/leivast-redel.zip">kratt.roots.ee/leivast-redel.zip</a> (lahti pakkima ei pea).</li>
+      <li><b>Settings → Capabilities:</b> lülita sisse koodi käivitamine (oskused vajavad seda).</li>
+      <li><b>Customize → Skills</b> → „+" → <b>Create skill</b> → <b>Upload a skill</b> → vali alla laaditud ZIP.</li>
+      <li><b>Valmis:</b> oskus on nimekirjas ja sisse lülitatud. Proovi uues vestluses.</li>
+    </ol>
+    <p class="note">Team- ja Enterprise-plaanil peab organisatsiooni omanik oskused enne lubama.</p>
+  </section>
+
+  <section>
+    <h3>Claude Code</h3>
+    <pre><code>claude plugin marketplace add argoroots/kratt
+claude plugin install leivast-redel@kratt</code></pre>
+  </section>
+
+  <section>
+    <h3>Muu agent</h3>
+    <p>Klooni <a href="https://github.com/argoroots/kratt">github.com/argoroots/kratt</a> ja kopeeri kaust <code>leivast-redel</code> agendi oskuste kausta.</p>
+  </section>
+
+</main>
+<footer>
+  <a href="https://github.com/argoroots/kratt">Lähtekood GitHubis</a> · Litsents <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.et">CC BY-NC-SA 4.0</a>
+</footer>
+</body>
+</html>

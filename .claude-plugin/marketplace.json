@@ -32,6 +32,13 @@
       "description": "Tikandimustrite kausta korrastamine masinale sobivaks koguks koos eelvaadete ja kataloogi PDF-iga",
       "homepage": "https://kratt.roots.ee/",
       "license": "CC-BY-NC-SA-4.0"
+    },
+    {
+      "name": "leivast-redel",
+      "source": "./leivast-redel",
+      "description": "Claude võtab muistendite kratti moodi ette võimatu ülesande, nt teeb leivast redeli",
+      "homepage": "https://kratt.roots.ee/",
+      "license": "CC-BY-NC-SA-4.0"
     }
   ]
 }
