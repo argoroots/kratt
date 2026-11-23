@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kratt – Claude'i oskused masintikkimiseks</title>
+<meta name="description" content="STITCH-O-MATIC ja Tikandikogu: Claude'i oskused tikkimisfailide tegemiseks ja tikandimustrite korrastamiseks.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* VOICE  calm, practical, like a good sewing-shop leaflet
+     IDEA   each skill is a card you open like a pattern envelope
+     COLOUR neutral grey ground, white cards, one thread blue (#102694, the logo's own thread)
+     TYPE   Figtree; four sizes: 44 / 22 / 16 / 14 (subheads 18)
+     LAYOUT one 720px column, generous rhythm: 8 / 16 / 24 / 48 */
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#f2f3f5, #14161c);
+    --card: light-dark(#ffffff, #1c1f27);
+    --ink: light-dark(#1b1f2a, #e9ebf0);
+    --muted: light-dark(#5d6473, #a3a9b6);
+    --line: light-dark(#e2e4e8, #2d313b);
+    --accent: light-dark(#102694, #8fa2ff);
+    --accent-soft: light-dark(#eef0fa, #252b45);
+    --code: light-dark(#f2f3f5, #252833);
+    --s1: 8px; --s2: 16px; --s3: 24px; --s4: 48px;
+  }
+  :root[data-theme=light] { color-scheme: light; }
+  :root[data-theme=dark] { color-scheme: dark; }
+  * { box-sizing: border-box; min-width: 0; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.65 Figtree, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: clamp(40px, 8vw, 88px) 20px var(--s4); flex: 1 0 auto; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  p { margin: 0 0 var(--s2); }
+  p:last-child { margin-bottom: 0; }
+
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--s1) var(--s3); padding-bottom: 12px; margin-bottom: var(--s4); border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 44px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em; }
+  .tagline { margin: 0; color: var(--muted); font-size: 16px; }
+
+  .skill { background: var(--card); border: 1px solid var(--line); border-radius: 16px; margin: 0 0 var(--s3); transition: box-shadow .2s; }
+  .skill[open] { box-shadow: 0 8px 30px light-dark(rgba(27, 31, 42, .07), rgba(0, 0, 0, .35)); }
+  .skill > summary { list-style: none; cursor: pointer; padding: 28px 72px 28px 32px; position: relative; border-radius: 16px; }
+  .skill > summary::-webkit-details-marker { display: none; }
+  .skill > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .skill > summary::after { content: ""; position: absolute; right: 28px; top: 32px; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft) no-repeat center / 14px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23102694' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); transition: transform .2s; }
+  .skill[open] > summary::after { transform: rotate(180deg); }
+  h2 { margin: 0 0 var(--s1); font-size: 22px; line-height: 1.3; font-weight: 700; }
+  .summary { color: var(--muted); margin: 0; }
+
+  .body { padding: var(--s4) 32px 40px; border-top: 1px solid var(--line); }
+  section + section { margin-top: var(--s4); }
+  h3 { margin: 0 0 12px; font-size: 18px; line-height: 1.35; font-weight: 700; color: var(--accent); }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { position: relative; padding-left: 22px; margin: 0 0 10px; }
+  li:last-child { margin-bottom: 0; }
+  li::before { content: ""; position: absolute; left: 2px; top: .7em; width: 8px; height: 2px; border-radius: 1px; background: var(--accent); }
+  b { font-weight: 600; }
+
+  code { font: 500 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code); padding: 2px 6px; border-radius: 5px; overflow-wrap: anywhere; }
+  .cmd, .example { display: flex; align-items: center; gap: var(--s1); background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; padding: 6px 6px 6px 20px; margin: 0 0 var(--s2); }
+  .cmd code { flex: 1; background: none; padding: 10px 0; }
+  .example span { flex: 1; padding: 10px 0; }
+  .example { margin: 0; }
+  .copy { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; }
+  .copy:hover { background: light-dark(rgba(16, 38, 148, .08), rgba(255, 255, 255, .08)); color: var(--accent); }
+  .copy:focus-visible { outline: 2px solid var(--accent); }
+  .copy.done { color: #1f8a43; }
+  .note { color: var(--muted); font-size: 14px; }
+
+  footer { flex: none; padding: var(--s3) 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; text-align: center; }
+
+  @media (max-width: 600px) {
+    body { font-size: 16px; }
+    h1 { font-size: 36px; }
+    .skill > summary { padding: 24px 60px 24px 20px; }
+    .skill > summary::after { right: 18px; top: 26px; }
+    .body { padding: 32px 20px; }
+    .cmd, .example { padding-left: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Kratt</h1>
+    <p class="tagline">by Argo Roots</p>
+  </header>
+
+  <details class="skill" id="stitch-o-matic">
+    <summary>
+      <h2>STITCH-O-MATIC</h2>
+      <p class="summary">Teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.</p>
+    </summary>
+    <div class="body">
+      <section>
+        <h3>Mis see on</h3>
+        <p>Annad Claude'ile pildi (SVG) ja ütled, mis masin, mis suurused ja mis kangas. Tagasi saad failid, mille saab otse masinasse laadida, ja projekti-PDF-i, kus on kogu info ühes kohas.</p>
+        <p>Claude pakub iga kujundi jaoks sobiva tehnika välja ja ütleb, miks just see. Otsuse teed sina. Kui midagi jääb ebaselgeks, küsib Claude, mitte ei oleta.</p>
+        <p>Enne failide andmist kontrollitakse, et pisted kataks kujundi täielikult ja ükski piste ei ulatuks serva taha.</p>
+      </section>
+
+      <section>
+        <h3>Mida see oskab</h3>
+        <ul>
+          <li><b>Masin:</b> Brother (PES) ja Janome (JEF). Raami suuruse kontroll on Brother Innov-is V3 (300 × 180 mm) ja Janome Memory Craft 550E (200 × 360 mm) järgi.</li>
+          <li><b>Tekst ja kitsad kujundid</b> satiinis, <b>laiad alad</b> täidisena, <b>ümarad kujundid</b> kontuuritäitena.</li>
+          <li><b>Aplikatsioon</b> ja <b>ristpiste</b>.</li>
+          <li><b>Mitu värvi ja mitu suurust</b> korraga, soovi korral täpselt soovitud mõõdus.</li>
+          <li><b>Kanga järgi seaded:</b> linane, puuvill, teksas, trikoo, fliis, frotee, nahk jt.</li>
+          <li><b>Väike kiri peene niidiga</b> (60 wt) ja <b>foto võrdlus</b> tikitud prooviga.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Mida saad</h3>
+        <ul>
+          <li>Tikkimisfailid iga suuruse kohta: Brotherile PES, Janomele JEF.</li>
+          <li>Projekti-PDF: failid, niidivärvid, tikkimisviis ja testimise juhend ning iga suuruse eeldatav välimus, pistete käik ja niidi tihedus mõõtkavas 1 : 1.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Mida see veel ei oska</h3>
+        <ul>
+          <li>Suunatud ja kiirtena täidised (nt karv, lehesooned, päike) ning värviüleminekud.</li>
+          <li>3D vaht (puff) mütside ja kõrge reljeefi jaoks.</li>
+          <li>Vabalt seisev pits (FSL).</li>
+          <li>Raamis valmistatavad esemed (ITH), nt kotike või võtmehoidja.</li>
+          <li>Raamist suuremad tikandid mitmes osas.</li>
+          <li>Mütsi kumerale pinnale sobiv tikkimise järjekord.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Paigaldamine</h3>
+        <p>Kopeeri see käsk Claude'ile või oma agendile:</p>
+        <div class="cmd"><code>Set up kratt.roots.ee/skill.md – STITCH-O-MATIC</code><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+        <p class="note">Ta juhendab sind edasi samm-sammult.</p>
+      </section>
+
+      <section>
+        <h3>Kasutamine</h3>
+        <div class="example"><span>„Tee sellest logost tikkimisfail Brotherile, 100 ja 150 mm, kangas trikotaaž.“</span><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+      </section>
+    </div>
+  </details>
+
+  <details class="skill" id="tikandikogu">
+    <summary>
+      <h2>Tikandikogu</h2>
+      <p class="summary">Korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.</p>
+    </summary>
+    <div class="body">
+      <section>
+        <h3>Mis see on</h3>
+        <p>Annad Claude'ile kausta tikandimustritega ja ütled, mis masinale kogu teha. Claude vaatab mustrid läbi ning pakub välja kategooriad ja nimed.</p>
+        <p>Pärast sinu kinnitust teeb Claude uue korrastatud kogu. Originaalfaile ei muudeta – kõik tehakse koopiatena teise kausta.</p>
+      </section>
+
+      <section>
+        <h3>Mida see oskab</h3>
+        <ul>
+          <li><b>Masin:</b> Brother Innov-is V3 (PES) või Janome Memory Craft 550E (JEF + JBF).</li>
+          <li><b>Kategooriad</b> (nt Loomad, Lilled) – sinu omad või Claude pakub välja.</li>
+          <li><b>Ühtsed failinimed</b> koos suurusega mm-des, nt <code>Kass 102</code>. Sama nimega erinevad mustrid saavad tähed A, B, C.</li>
+          <li><b>Raam:</b> mustrid, mis masina raami ei mahu, jäetakse välja ja loetletakse.</li>
+          <li>Teised vormingud (DST, EXP …) teisendatakse ainult sinu loal.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Mida saad</h3>
+        <ul>
+          <li>Korrastatud kaust masinafailidega ja eelvaade igale mustrile.</li>
+          <li>Kataloogi PDF (A4) kategooriate kaupa, iga mustri juures nimi ja suurused.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Paigaldamine</h3>
+        <p>Kopeeri see käsk Claude'ile või oma agendile:</p>
+        <div class="cmd"><code>Set up kratt.roots.ee/skill.md – Tikandikogu</code><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+        <p class="note">Ta juhendab sind edasi samm-sammult.</p>
+      </section>
+
+      <section>
+        <h3>Kasutamine</h3>
+        <div class="example"><span>„Korrasta mu tikandimustrite kaust Janome jaoks.“</span><button class="copy" type="button" aria-label="Kopeeri" title="Kopeeri"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button></div>
+      </section>
+    </div>
+  </details>
+
+</main>
+  <footer>
+    <a href="https://github.com/argoroots/kratt">Lähtekood GitHubis</a> · Litsents <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.et">CC BY-NC-SA 4.0</a>
+  </footer>
+<script>
+{
+  // open the skill named in the address (#stitch-o-matic, #tikandikogu)
+  const openFromHash = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS') d.open = true; };
+  openFromHash(); window.addEventListener('hashchange', openFromHash);
+
+  const tick = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  for (const b of document.querySelectorAll('.copy')) {
+    const icon = b.innerHTML;
+    b.addEventListener('click', async () => {
+      const code = b.previousElementSibling;
+      try { await navigator.clipboard.writeText(code.textContent.replace(/^„|“$/g, '')); b.innerHTML = tick; b.classList.add('done'); b.title = 'Kopeeritud'; }
+      catch (e) { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+      setTimeout(() => { b.innerHTML = icon; b.classList.remove('done'); b.title = 'Kopeeri'; }, 2000);
+    });
+  }
+}
+</script>
+</body>
+</html>

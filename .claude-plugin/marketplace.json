@@ -1,0 +1,23 @@
+{
+  "name": "kratt",
+  "description": "Argo Roots'i Claude'i oskused tikkimiseks",
+  "owner": {
+    "name": "Argo Roots"
+  },
+  "plugins": [
+    {
+      "name": "stitch-o-matic",
+      "source": "./stitch-o-matic",
+      "description": "Vektorpildist (SVG) tikkimisfailid Brotherile (PES) ja Janomele (JEF) mitmes suuruses, koos kontrolli ja 1:1 projekti-PDF-iga",
+      "homepage": "https://kratt.roots.ee/",
+      "license": "CC-BY-NC-SA-4.0"
+    },
+    {
+      "name": "tikandikogu",
+      "source": "./tikandikogu",
+      "description": "Tikandimustrite kausta korrastamine masinale sobivaks koguks koos eelvaadete ja kataloogi PDF-iga",
+      "homepage": "https://kratt.roots.ee/",
+      "license": "CC-BY-NC-SA-4.0"
+    }
+  ]
+}
