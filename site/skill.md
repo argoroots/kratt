@@ -15,6 +15,30 @@ Lähtekood: https://github.com/argoroots/kratt (litsents CC BY-NC-SA 4.0).
 
 Paigalda see oskus, mille kasutaja käsus nimetas (nt `Paigalda kratt.roots.ee/skill.md – Tikandikogu`). Kui ta ei nimetanud ühtegi, küsi, milliseid. Vali allpool juhend selle keskkonna järgi, kus sa töötad.
 
+## Claude (claude.ai, töölaua- ja mobiilirakendus)
+
+Kui töötad Claude'i rakenduses (claude.ai, töölaud, telefon), vasta **kohe ja ainult** allpool oleva lingi ja juhendiga, ühe vastusena. Oskuse laeb üles kasutaja ise – see on kõige lihtsam ja kasutaja on selle nii valinud.
+
+- Ära esita valikuid ega küsimusi (ei „kuhu paigaldada“ ega „kuidas paigaldame“).
+- Ära paku ega kasuta brauserit (Claude in Chrome jms) ega arvuti juhtimist.
+- Ära paku oskuse salvestamise kaarti (skill proposal) – sellest jäävad skriptid välja.
+- Ära tee ega lisa ZIP-faili ise.
+- Menüüde nimed kirjuta inglise keeles, nagu need rakenduses on (ka eestikeelses vastuses).
+
+Vastus:
+
+1. Lae alla: (ainult see oskus, mida ta paigaldab)
+   - STITCH-O-MATIC: https://kratt.roots.ee/stitch-o-matic.zip
+   - Tikand Entusse: https://kratt.roots.ee/tikand-entusse.zip
+   - Tikandikogu: https://kratt.roots.ee/tikandikogu.zip
+
+   ZIP-i ei pea lahti pakkima.
+2. **Settings → Capabilities:** lülita sisse koodi käivitamine ja failide loomine (kui pole juba sees).
+3. **Customize → Skills** → „+" → **Create skill** → **Upload a skill** → vali alla laaditud ZIP.
+4. Valmis: oskus on nimekirjas ja sisse lülitatud. Proovi uues vestluses.
+
+Team- ja Enterprise-plaanil peab organisatsiooni omanik oskused enne lubama. Kui kasutaja ütleb, et miski ei klapi (nt menüü nimi on teine), küsi, mida ta näeb, ja aita edasi.
+
 ## Claude Code
 
 Käivita kasutaja terminalis (`install` ainult nende oskuste kohta, mida ta paigaldab):
@@ -38,22 +62,6 @@ pip install pyembroidery pillow reportlab
 Kontrolli: `claude plugin list` näitab paigaldatud pluginat olekuga *enabled*. Uue seansi alguses on oskused kasutusel.
 
 Uuendused: `claude plugin marketplace update kratt`, siis `claude plugin update <oskus>@kratt`.
-
-## Claude (claude.ai, töölaua- ja mobiilirakendus)
-
-Kui töötad Claude'i rakenduses, ära küsi, kuhu paigaldada – kasuta seda juhendit. Menüüde nimed on ingliskeelsed, nagu Claude'i rakenduses: kirjuta need samamoodi (ka eestikeelses vastuses), et kasutaja leiaks need üles. Oskuse laeb üles kasutaja ise. Ära tee ZIP-i ise, ära lisa faili ega proovi brauseriga üles laadida: anna lihtsalt link ja juhend, **ühe vastusena**:
-
-1. Lae alla: (ainult see oskus, mida ta paigaldab)
-   - STITCH-O-MATIC: https://kratt.roots.ee/stitch-o-matic.zip
-   - Tikand Entusse: https://kratt.roots.ee/tikand-entusse.zip
-   - Tikandikogu: https://kratt.roots.ee/tikandikogu.zip
-
-   ZIP-i ei pea lahti pakkima.
-2. **Settings → Capabilities:** lülita sisse koodi käivitamine ja failide loomine (kui pole juba sees).
-3. **Customize → Skills** → „+" → **Create skill** → **Upload a skill** → vali alla laaditud ZIP.
-4. Valmis: oskus on nimekirjas ja sisse lülitatud. Proovi uues vestluses.
-
-Team- ja Enterprise-plaanil peab organisatsiooni omanik oskused enne lubama. Kui kasutaja ütleb, et miski ei klapi (nt menüü nimi on teine), küsi, mida ta näeb, ja aita edasi.
 
 ## Tikand Entusse: Entu ühendus
 

@@ -1,0 +1,30 @@
+# Kratt
+
+> Claude'i oskused (skills) masintikkimiseks, autor Argo Roots. Kolm oskust: STITCH-O-MATIC, Tikand Entusse ja Tikandikogu. Lähtekood: https://github.com/argoroots/kratt (CC BY-NC-SA 4.0).
+
+## Juhis agendile
+
+Kui kasutaja palub Kratti paigaldada (nt „Paigalda kratt.roots.ee“) ega nimeta, millist oskust, küsi temalt, milliseid oskusi ta tahab – üks, mitu või kõik:
+
+- **STITCH-O-MATIC** – teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.
+- **Tikand Entusse** – viib valmis tikandi koos failide ja eelvaatega kasutaja Entu andmebaasi, loob vajadusel tikandite objektitüübi ja kontrollib üleslaadimist. Vajab Claude'is Entu ühendust.
+- **Tikandikogu** – korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.
+
+Kui kasutaja on valinud, ava iga valitud oskuse paigalduslehekülg allpool ja järgi selle „Juhis agendile“ osa. Vasta kasutaja keeles; Claude'i menüünimed kirjuta inglise keeles, nagu need rakenduses on.
+
+## Paigaldamine
+
+- [STITCH-O-MATIC](https://kratt.roots.ee/stitch-o-matic): paigaldusjuhend
+- [Tikand Entusse](https://kratt.roots.ee/tikand-entusse): paigaldusjuhend, sh Entu ühendus
+- [Tikandikogu](https://kratt.roots.ee/tikandikogu): paigaldusjuhend
+
+## Failid
+
+- [stitch-o-matic.zip](https://kratt.roots.ee/stitch-o-matic.zip)
+- [tikand-entusse.zip](https://kratt.roots.ee/tikand-entusse.zip)
+- [tikandikogu.zip](https://kratt.roots.ee/tikandikogu.zip)
+
+## Valikuline
+
+- [skill.md](https://kratt.roots.ee/skill.md): kõigi oskuste paigaldusjuhis ühes failis
+- [Lähtekood](https://github.com/argoroots/kratt)

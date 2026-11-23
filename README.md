@@ -16,12 +16,12 @@ Korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtse
 
 ## Paigaldamine
 
-Kopeeri see käsk Claude'ile või oma agendile, oskuse nimega:
+Kopeeri see käsk Claude'ile või oma agendile:
 
 ```
-Paigalda kratt.roots.ee/skill.md – STITCH-O-MATIC
-Paigalda kratt.roots.ee/skill.md – Tikand Entusse
-Paigalda kratt.roots.ee/skill.md – Tikandikogu
+Paigalda kratt.roots.ee/stitch-o-matic
+Paigalda kratt.roots.ee/tikand-entusse
+Paigalda kratt.roots.ee/tikandikogu
 ```
 
 Ta juhendab sind edasi samm-sammult.
