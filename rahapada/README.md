@@ -1,6 +1,6 @@
 # Rahapada
 
-Rahapada on muistendite aardepada: kus maa all raha peidus, seal nähti öösiti tuld põlemas. See Claude'i oskus teeb sinu pangakannetest isikliku rahaasjade töölaua: näed, kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad.
+See Claude'i oskus teeb sinu pangakannetest isikliku rahaasjade töölaua: näed, kuhu raha läheb, palju kuu lõpuks üle jääb ja kuidas säästud, investeeringud ja laenud ajas muutuvad.
 
 ## Mis see on
 
