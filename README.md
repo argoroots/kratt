@@ -1,15 +1,31 @@
-# kratt
+# Kratt
 
-Claude'i oskused (skills).
+Claude'i oskused (skills). Vaata ka [kratt.roots.ee](https://kratt.roots.ee).
 
-## Stitch-o-matic
+## STITCH-O-MATIC
 
-Teeb logost või muust vektorpildist tikkimisfailid valitud masinale, mitmes suuruses. Kaasa tuleb PDF, kus mustrid on 1:1 suuruses ja kus on testimise juhend. Soovi korral teeb ka animatsiooni, kus on näha, kuidas muster tikitakse.
+Teeb logost või muust vektorpildist tikkimisfailid Brotherile ja Janomele mitmes suuruses, koos kontrolli ja 1 : 1 projekti-PDF-iga.
 
-## tikandikogu
+## Tikand Entusse
 
-Korrastab tikandimustrite kausta valitud masina jaoks. Jagab mustrid kategooriatesse ja annab neile ühtsed nimed koos suurusega. Teeb eelvaated, jätab välja mustrid, mis raami ei mahu, ja koostab kataloogi PDF-i. Algfaile ei muudeta.
+Viib valmis tikandi koos failide ja eelvaatega sinu Entu andmebaasi, loob vajadusel tikandite objektitüübi ja kontrollib üleslaadimist.
+
+## Tikandikogu
+
+Korrastab tikandimustrite kausta Brotheri või Janome jaoks: kategooriad, ühtsed nimed, eelvaated ja kataloogi PDF.
+
+## Paigaldamine
+
+Kopeeri see käsk Claude'ile või oma agendile, oskuse nimega:
+
+```
+Set up kratt.roots.ee/skill.md – STITCH-O-MATIC
+Set up kratt.roots.ee/skill.md – Tikand Entusse
+Set up kratt.roots.ee/skill.md – Tikandikogu
+```
+
+Ta juhendab sind edasi samm-sammult.
 
 ## Litsents
 
-[CC BY-NC-SA 4.0](LICENSE) – kasutada, muuta ja jagada võib mitteärilisel eesmärgil, viidates päritolule (kratt, Argo Roots). Muudetud versioone tohib jagada ainult sama litsentsiga. Parandused ja täiendused on oodatud pull request'ina.
+[CC BY-NC-SA 4.0](LICENSE) – kasutada, muuta ja jagada võib mitteärilisel eesmärgil, viidates päritolule (Kratt, Argo Roots). Muudetud versioone tohib jagada ainult sama litsentsiga. Parandused ja täiendused on oodatud pull request'ina.

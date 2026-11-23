@@ -13,6 +13,13 @@
       "license": "CC-BY-NC-SA-4.0"
     },
     {
+      "name": "tikand-entusse",
+      "source": "./tikand-entusse",
+      "description": "Valmis tikandi viimine Entu andmebaasi: objektitüübi kontroll või loomine, failide üleslaadimine ja kontroll",
+      "homepage": "https://kratt.roots.ee/",
+      "license": "CC-BY-NC-SA-4.0"
+    },
+    {
       "name": "tikandikogu",
       "source": "./tikandikogu",
       "description": "Tikandimustrite kausta korrastamine masinale sobivaks koguks koos eelvaadete ja kataloogi PDF-iga",

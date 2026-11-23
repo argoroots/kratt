@@ -1,4 +1,4 @@
-# Stitch-o-matic
+# STITCH-O-MATIC
 
 Claude teeb pildist masintikandi faili. Sina annad pildi ja ütled, mis masin, mis suurused ja mis kangas. Tagasi saad failid, mille saab otse masinasse laadida, ja projekti-PDF-i, kus on kogu info ühes kohas.
 
