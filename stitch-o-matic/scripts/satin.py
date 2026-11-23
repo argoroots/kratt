@@ -12,6 +12,8 @@ RES = 0.02  # mm per pixel
 # satin options (mm unless noted)
 OPTS = dict(
     short_dist=0.25,     # same-side needle points closer than this (inside of curves) ...
+    hairpin='auto',           # sharp U-turns: 'auto' (one fanned column when the outside is rounded, else split),
+                              # 'fan' (always one column), 'split' (always two)
     short_inset=(0.15, 0.3),  # ... those stitches are shortened by these shares of the width, in turn
     pull_mm=0.0,         # widen columns by this many mm on each side (pull compensation)
     stretch=0.0,         # stretchy fabric: compensation is (1 - s/2 .. 1 + s/2) x pull_mm, the most for
@@ -107,7 +109,7 @@ def branches(poly, width):
         ls = LineString(pts).simplify(0.04)
         if ls.length < 0.05: continue
         # split at sharp corners (E, L-type corners): direction change > 50 deg within ~1 width
-        parts = _split_corners(ls, width)
+        parts = _split_corners(ls, width, poly=poly)
         for k_, part in enumerate(parts):
             a_ = e0 if k_ == 0 else ('j', cid + k_ - 1)
             b_ = e1 if k_ == len(parts) - 1 else ('j', cid + k_)
@@ -121,6 +123,46 @@ def branches(poly, width):
         L = ls.length; p0 = ls.interpolate(0 if at_start else L); p1 = ls.interpolate(min(L, 1.5 * width) if at_start else max(0, L - 1.5 * width))
         dx, dy = p1.x - p0.x, p1.y - p0.y; d = math.hypot(dx, dy) or 1
         return dx / d, dy / d
+    # hairpin: two strokes leaving a junction side by side (narrow V) with a short free stem out of the
+    # junction the other way (the closed tip): one column round the bend, the stitches fan at the corner.
+    # The stem goes; both arms run on straight to where their centre lines meet. 'split' keeps them apart.
+    hp = OPTS.get('hairpin', 'auto')
+    for c in range(cid if hp != 'split' else 0):
+        ends = [(i, k) for i, sg in enumerate(segs) for k in (1, 2) if sg[k] == ('j', c)]
+        if len(ends) not in (2, 3) or len({i for i, _ in ends}) != len(ends): continue
+        stems = [(i, k) for i, k in ends if segs[i][2 if k == 1 else 1][0] == 'e' and segs[i][0].length < 5 * width]
+        if len(ends) == 3 and len(stems) != 1: continue
+        si = stems[0][0] if len(ends) == 3 else None                                # (a short stem may be gone already)
+        (ai, ak), (bi, bk) = [e for e in ends if e[0] != si]
+        da = outdir(segs[ai][0], ak == 1); db = outdir(segs[bi][0], bk == 1)
+        if da[0] * db[0] + da[1] * db[1] < math.cos(math.radians(70)): continue     # not a narrow V
+        if si is not None:
+            sk = stems[0][1]; ds_ = outdir(segs[si][0], sk == 1)
+            mx, my = da[0] + db[0], da[1] + db[1]; mn = math.hypot(mx, my) or 1
+            if (mx * ds_[0] + my * ds_[1]) / mn > -0.8: continue                    # stem not out of the V
+            stip = segs[si][0].coords[-1 if sk == 1 else 0]
+        else:
+            stip = segs[ai][0].coords[0 if ak == 1 else -1]
+        A = trim_j(segs[ai][0], ak == 1, bend); B = trim_j(segs[bi][0], bk == 1, bend)
+        ca = list(A.coords); cb = list(B.coords)
+        if ak == 1: ca = ca[::-1]
+        if bk == 2: cb = cb[::-1]
+        pa, pb = ca[-1], cb[0]
+        def far_dir(cs):                    # direction of the straight part, past the bend into the junction
+            l_ = LineString(cs); q0 = l_.interpolate(min(l_.length, 2 * width)); q1 = l_.interpolate(min(l_.length, 5 * width))
+            dx, dy = q0.x - q1.x, q0.y - q1.y; n_ = math.hypot(dx, dy) or 1
+            return dx / n_, dy / n_
+        ua = far_dir(ca[::-1]); ub = far_dir(cb); ub = (-ub[0], -ub[1])             # along A into the corner, along B out of it
+        den = ua[0] * ub[1] - ua[1] * ub[0]
+        if abs(den) < 1e-6: continue
+        t = ((pb[0] - pa[0]) * ub[1] - (pb[1] - pa[1]) * ub[0]) / den
+        P = (pa[0] + ua[0] * t, pa[1] + ua[1] * t)
+        if t < 0 or math.dist(P, stip) > 3 * width: continue
+        if hp == 'auto' and not _smooth_turn(poly, P, width): continue             # sharp tip: split (the default)
+        ea = segs[ai][2] if ak == 1 else segs[ai][1]; eb = segs[bi][2] if bk == 1 else segs[bi][1]
+        new_ = [LineString(ca + [P] + cb), ea, eb]
+        for k_ in sorted([x for x in (ai, bi, si) if x is not None], reverse=True): segs.pop(k_)
+        segs.append(new_)
     # through-strokes: at each junction join the two most opposite branches into one column
     for c in range(cid):
         while True:
@@ -164,10 +206,11 @@ def branches(poly, width):
         c = list(ls.coords)
         if len(c) < 2: continue
         for end, e in ((0, e0), (-1, e1)):
-            # a stroke going through to the outer edge goes past it by the pull compensation, like the side
-            # edges of the stroke it crosses (else its end looks short next to them: E stem)
+            # a stroke going through to the outer edge ends at it like a free end: a column end is not pulled
+            # in (its stitches run along the edge) but pushed out, while the side edges of the stroke it
+            # crosses are pulled back to the outline. Past it by the compensation the E stem stood out on top.
             if e[0] == 't': c[end] = _extend(_back(c, end, width), c[end], poly, width,
-                                             inset=-(OPTS['pull_mm'] + min(OPTS['max_widen'] / 2, max(0.0, (OPTS['min_width'] - width) / 2))))
+                                             inset=0.1 - min(OPTS['max_widen'] / 2, max(0.0, (OPTS['min_width'] - width) / 2)))
             elif e[0] == 'j': c[end] = _straight(_back(c, end, width), c[end], bend - jc, poly)
         if width >= 2.5:                 # wide column: the skeleton tail bends to a corner of the end;
             for end, e in ((0, e0), (-1, e1)):    # drop the bent last piece, the end runs straight on (below)
@@ -223,7 +266,10 @@ def _reach(out, jends, poly, width):
             if all(O.distance(Point(q[0] + sg * n[0] * h, q[1] + sg * n[1] * h)) <= lim for sg in (1, -1)): break
             t += 0.05
         else: q = (b[0] + u[0] * t, b[1] + u[1] * t)   # not reached: go as far as allowed
-        if t > 0 and poly.buffer(0.02).contains(Point(q)): c[end] = q
+        inside = poly.buffer(0.02)
+        while t > 0 and not inside.contains(Point(q)):        # past the outline (top of A): as far as it stays inside
+            t -= 0.05; q = (b[0] + u[0] * t, b[1] + u[1] * t)
+        if t > 0: c[end] = q
 
 
 def _split(G, key):
@@ -260,9 +306,29 @@ def _straight(a, b, L, poly):
     return q if poly.buffer(0.02).contains(Point(q)) else b
 
 
-def _split_corners(ls, width, mitre=True):
+def _smooth_turn(poly, p, width):
+    """a hairpin bend: the outline on the outside of the turn is a smooth curve (no vertex turning more
+    than 40 deg). The inside may come to a point - the stitches pivot there, fanning round the bend."""
+    r = 1.2 * width + 0.3
+    near = poly.buffer(0).boundary.intersection(Point(p).buffer(r))
+    for g in getattr(near, 'geoms', [near]):
+        if g.is_empty or g.geom_type != 'LineString': continue
+        c = list(g.simplify(0.03).coords)
+        if len(c) < 5: continue                                   # a short piece: the inside point
+        turns = []
+        for a, b, d in zip(c, c[1:], c[2:]):
+            v1 = (b[0] - a[0], b[1] - a[1]); v2 = (d[0] - b[0], d[1] - b[1])
+            l1, l2 = math.hypot(*v1), math.hypot(*v2)
+            if l1 < 1e-6 or l2 < 1e-6: continue
+            turns.append(math.degrees(math.acos(max(-1, min(1, (v1[0] * v2[0] + v1[1] * v2[1]) / (l1 * l2))))))
+        if turns and max(turns) <= 40 and sum(turns) >= 90: return True   # a real bend, rounded on the outside
+    return False
+
+
+def _split_corners(ls, width, mitre=True, poly=None):
     """split a centre line where it turns a corner: chord directions 1.2 widths before and after
-    a point differ by more than 25 deg (local maximum)"""
+    a point differ by more than 25 deg (local maximum). With the outline given, a turn whose outline
+    is a smooth curve (a hairpin bend, not a corner) stays one column: the stitches fan round it."""
     L = ls.length; h = 1.2 * width
     if L < 2 * h + 0.2: return [ls]
     ds = np.arange(h, L - h, 0.05)
@@ -281,7 +347,10 @@ def _split_corners(ls, width, mitre=True):
     for c in cuts:
         i = int(round((c - h) / 0.05))
         lo = ang(max(h, c - h)) if c - h >= h else 0; hi = ang(min(L - h, c + h)) if c + h <= L - h else 0
-        if A[i] > 1.8 * max(lo, hi) and 1.4 * width < c < L - 1.4 * width: keep.append(c)
+        if A[i] > 1.8 * max(lo, hi) and 1.4 * width < c < L - 1.4 * width:
+            hp = OPTS.get('hairpin', 'auto')
+            if mitre and poly is not None and hp == 'auto' and _smooth_turn(poly, ls.interpolate(c).coords[0], width): continue
+            keep.append(c)
     if not keep: return [ls]
     if not mitre: return keep
     out = []; prev = 0.0
@@ -556,7 +625,7 @@ def _split_long(pts):
 
 def rails(pairs, width):
     """edge runs a little inside the column, for contour underlay"""
-    ins = max(0.2, 0.15 * width)
+    ins = max(0.2, 0.15 * width) + OPTS['pull_mm']     # from the drawn edge, not the compensated one
     def inset(a, b):
         d = math.dist(a, b) or 1; t = min(ins, d / 2.5) / d
         return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
@@ -636,7 +705,8 @@ def _plan(poly, br, caps, G, start, spacing, width, closes=None):
         k = (round(p[0], 3), round(p[1], 3))
         if k not in near_cache: near_cache[k] = min(nodes, key=lambda q: math.dist(p, q))
         return near_cache[k]
-    kinds = [underlay_kind(float(np.median([math.dist(l, r) for l, r in column_pairs(poly, c, spacing, width)] or [width]))) for c in cols]
+    # by the drawn width: the pairs include the pull compensation (a 1.7 mm stroke would count as 2.4 mm)
+    kinds = [underlay_kind(float(np.median([math.dist(l, r) for l, r in column_pairs(poly, c, spacing, width)] or [width])) - 2 * OPTS['pull_mm']) for c in cols]
     sat_cov = []
     for c in cols:
         sat_cov.append(LineString(c).buffer(0.62 * width, cap_style=2))

@@ -14,11 +14,26 @@ Reeglid ja nende põhjused (kangas, tihedus, alustikk, suund, nurgad) on failis 
 | Brother Innov-is V3 | PES (v10 töötava faili päisega, nullpunkt ülal vasakul) | 300 × 180 mm |
 | Janome Memory Craft 550E | JEF (+ BMP eelvaade, keskpunktiga) | 200 × 360 mm |
 
+PES sobib Brotheri (ja Baby Locki) masinatele, JEF Janome masinatele. Teise mudeli või väiksema raami puhul anna raam ette: `--hoop 130x180` (tikkimisala mm). Levinud raamid:
+
+| Raam | Tikkimisala (mm) | Kus |
+|---|---|---|
+| 4 × 4" | 100 × 100 | Brotheri ja Janome väikesed masinad (nt Brother M370) |
+| 5 × 7" | 130 × 180 | Brother (nt F540E); Janome RE20 on 140 × 200 |
+| SQ14 / SQ20 | 140 × 140 / 200 × 200 | Janome |
+| 6 × 10" | 160 × 260 | Brother keskklass |
+| 7 × 12" | 180 × 300 | Brother, nt Innov-is V3 |
+| RE36 | 200 × 360 | Janome 550E |
+| 9½ × 14" | 240 × 360 | Brother XE2, XJ2 |
+
+Raami kasutatav ala on masina juhendis; kui kasutaja ei tea, küsi masina mudelit ja vaata järele.
+
 ## 1. Küsi enne alustamist
-- **Masin:** Brother Innov-is V3, Janome Memory Craft 550E või mõlemad. Küsi masina, mitte faili järgi: vorming tuleb masinast.
-- **Suurused** (pikem külg mm). Iga suurus peab mahtuma valitud masina raami (`gen.py` hoiatab). Küsi, kas suurus on tikandi tegelik mõõt (siis `--exact`: skaala kohendatakse, kuni pistete pikem külg on täpselt see, 0,05 mm piires) või pildi mõõt (vaikimisi; pisted tulevad kompensatsiooni võrra suuremad). Kasutajad mõtlevad tavaliselt tegelikku mõõtu.
+- **Masin ja raam:** küsi masina mudelit, mitte faili vormingut (vorming tuleb masinast: Brother → PES, Janome → JEF). Kui see pole Innov-is V3 ega 550E või kasutatakse väiksemat raami, küsi raami tikkimisala ja anna `--hoop`.
+- **Suurused** (pikem külg mm). Iga suurus peab mahtuma raami (`gen.py` hoiatab). Küsi, kas suurus on tikandi tegelik mõõt (siis `--exact`: skaala kohendatakse, kuni pistete pikem külg on täpselt see, 0,05 mm piires) või pildi mõõt (vaikimisi; pisted tulevad kompensatsiooni võrra suuremad). Kasutajad mõtlevad tavaliselt tegelikku mõõtu.
 - **Niit:** tavaline 40 wt või peen 60 wt (`--thread 60`). Alla ~5 mm kirja korral soovita 60 wt (nõel 65/9): pisted tihedamad ja kitsamad, tähtede augud jäävad lahti. 60 wt fail ei sobi 40 wt niidiga.
 - **Kangas:** linane, puuvill, teksas, kanvas, trikoo, fliis, frotee, nahk, vinüül (`--fabric linen / cotton / denim / canvas / jersey / fleece / terry / leather / vinyl`, vt `KNOWLEDGE.md` jaotis 8). Kui see pole teada, küsi; ära oleta.
+- **Tugimaterjal:** mis on all ja kas midagi on peal (`--stabilizer cutaway|mesh|tearaway|washaway-film|washaway-fiber|fusible|sticky`, liita `+`-ga, nt `cutaway+fusible`; `--topping washaway-film`). Kui kasutaja ei tea, soovita kanga järgi (`KNOWLEDGE.md`, Tugimaterjal) ja küsi kinnitust. Trikool vees lahustuv all: ütle, et pärast pesu see ei toeta (PDF hoiatab ka).
 - **Variandid** (nt ilma tekstita) on eraldi SVG-d. Küsi, kas variant peab olema samas mõõtkavas kui terve pilt (vt 2). Kui jah, tee kõigepealt terve pilt; `gen.py` trükib iga faili skaala (`scale … mm/unit`, ka `out/meta.json`), ja variant tehakse samade skaaladega: `--scales 0.568,0.856,1.143` (SVG-d peavad olema samas koordinaadistikus).
 - Töötav fail samale masinale (sellega võrdled), failide ja niitide nimed. Neid ära tuleta ise.
 - Näita pilti PNG-na ja oota kinnitust. Muuda ainult kasutaja nõusolekul. Kui valikul on hind (nt rohkem lõikeid), ütle see numbritega.
@@ -89,7 +104,7 @@ Kasutaja saab **ainult tikkimisfailid ja projekti PDF-i** (7). Pilte talle ei an
 - `--line` → `check/<fail>.line.png` (400×400 joonepilt niidi värvis helehallil taustal) ainult siis, kui tikand lisatakse kogusse (`tikandikogu` skill).
 
 ## 7. PDF (`pdfcad.py` → `<Nimi> - Projekt.pdf`)
-- **Esileht (A4 püsti):** pealkiri; failide tabel (lehed, fail, mõõdud, pisted, lõiked); värvitabel (originaal, Brother, Janome värvinäidistega); „Kuidas on tehtud“ ainult kasutatud pistetüüpide ja vormingute kohta; „Kuidas testida“ + proovitabel; märkus alaservas (1 : 1, prindi 100 %, mõõtjoonlaud 50 mm). Mahub ühele lehele.
+- **Esileht (A4 püsti):** pealkiri; failide tabel (lehed, fail, mõõdud, pisted, lõiked); värvitabel (originaal, Brother, Janome värvinäidistega); „Valikud“ – kõik, mida kasutaja valis või seadistas (masin, raam, suurused ja mõõdu liik, kangas, tugimaterjal all ja peal, niit, täidise nurk, niidinimed, plaan, `--set`); kui midagi on valimata, märgitakse soovitus; „Kuidas on tehtud“ ainult kasutatud pistetüüpide ja vormingute kohta; „Kuidas testida“ + proovitabel; märkus alaservas (1 : 1, prindi 100 %, mõõtjoonlaud 50 mm). Mahub ühele lehele.
 - **Joonised (A4 rõhtsalt), iga suuruse kohta 3 lehte, kõik 1:1, CAD-stiilis** (topeltraam, tsoonimärgid, pealkirjaplokk koos JOONIS-reaga, mõõtjooned, telgjooned, mõõtjoonlaud):
   1. *Eeldatav välimus:* tikand pärast tikkimist (`preview.look`): satiinipisted tõmbuvad otstest kompensatsiooni võrra sisse (kangal venivam suund rohkem, alla 1,5 mm pisted vähem), satiinisammas pikeneb otstest 0,4 × kompensatsioon, satiin kumer (keskelt hele, otstest tume), sirgpiste jääb pidevaks; kanga tekstuur kanga järgi (trikotaaž silmused, lina/puuvill riie), kanga värv keskkonnamuutujast `FABRIC`. See on hinnang: kompensatsiooni arv on eeldatav tõmme, tegeliku näitab proov. Fail ise (pisted enne tõmmet) on `check/<fail>.thread.png`.
   2. *Pistete käik:* alustikk helesinine ja peenike; pealmised pisted järjekorras, igaüks valge äärisega, nii et pealmine jääb nähtavalt peale.
@@ -144,7 +159,7 @@ Käivitus töökaustas (skriptid sinna kopeeritud):
 ```
 python3 swatch.py pilt.svg --size 200 --list
 python3 optimize.py pilt.svg --size 150 --ref-size 200 --fabric linen --angle 45 [--plan plan.json] --out plan.json
-python3 gen.py pilt.svg --name "Nimi" --sizes 100,150,200 [--exact] [--thread 60] --machines brother,janome --working toimiv.pes \
+python3 gen.py pilt.svg --name "Nimi" --sizes 100,150,200 [--exact] [--thread 60] [--hoop 130x180] [--stabilizer cutaway] [--topping washaway-film] --machines brother,janome --working toimiv.pes \
     --color "#rrggbb=Niidi nimi" --fabric linen --plan plan.json [--angle 45] [--background "#ffffff"] [--set nimi=väärtus]
 python3 check.py out/*.pes out/*.jef
 python3 preview.py out/*.pes --long 1200

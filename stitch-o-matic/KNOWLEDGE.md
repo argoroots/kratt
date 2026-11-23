@@ -30,7 +30,7 @@ Satiini ja tatami vahel valitakse kujundi laiuse järgi: 2 × pindala / ümberm�
 - **Tihedus:** sama külje pistete vahe 0,35–0,45 mm (vaikimisi 0,40). Vahe mõõdetakse **välimise serva järgi** ja eelmise pistega risti, nii et kurvi väliskülg jääb sama tihedaks kui sirge osa.
 - **Kurvi sisekülg:** punktid tulevad liiga lähestikku. Kui samal küljel on punkt eelmisest täispikast lähemal kui 0,25 mm, lühendatakse pistet kordamööda 15% ja 30% võrra („lühikesed pisted“). Muidu kuhjub niit ja kangas läheb katki.
 - **Alustikk laiuse järgi:** alla 2 mm keskjoon; 2–4 mm mõlemad servad (kontuur, 0,2–0,4 mm seest); üle 4 mm kontuur ja madal siksak. Alustikk kinnitab kanga tugimaterjali külge ja tõstab satiini kiudude kohale.
-- **Nurgad:** kuni ~60° pöördes jääb sammas tervikuks ja pisted pööravad ümber nurga (nurga poolitaja kaudu). Teravamas nurgas (täisnurk, A tipp) jagatakse sammas kaheks: üks läheb läbi välisservani ja kompensatsiooni võrra üle selle, teine lõpeb tema serval. Täisnurgas jätab pööramine välisnurka lehvikuvahed, jagamine mitte (mõõdetud E-tähel).
+- **Nurgad:** kuni ~60° pöördes jääb sammas tervikuks ja pisted pööravad ümber nurga (nurga poolitaja kaudu). Teravamas nurgas (täisnurk, A tipp) jagatakse sammas kaheks: üks läheb läbi välisservani (mitte üle: sammast otsa niit kokku ei tõmba), teine lõpeb tema serval. Täisnurgas jätab pööramine välisnurka lehvikuvahed, jagamine mitte (mõõdetud E-tähel).
 - **Otsad kontuuril** lõpevad täispika pistega mõlemalt servalt, muidu jääb nurka kolmnurk.
 - **Vabad otsad:** viimased pisted pööravad otsa serva suunaliseks (kaldus otsal, nt K ja A jalal, viltu). Nii sulgub ots täpselt ning tippu ei kuhju lehvikut.
 - **Ristumised:** pikem joon läheb läbi ja lühem lõpeb selle serval. Läbiv joon läheb välisservast üle sama palju, kui risti olev joon on kompensatsiooni tõttu laiem (muidu paistab ots lühem, nt E püstkriips). Kitsas kiil, mida täide ei kata, kaetakse pikendusega. Laiem tühimik saab enne satiini väikese tatami.
@@ -80,6 +80,23 @@ Satiini ja tatami vahel valitakse kujundi laiuse järgi: 2 × pindala / ümberm�
 **Niidi jämedus:** tavaline 40 wt (~0,35–0,4 mm), peen 60 wt (~0,25 mm) väikese kirja ja peente detailide jaoks, nõel 65/9. 60 wt korral on pisted tihedamad ja satiin kitsam: satiini reavahe × 0,7, täidise reavahe × 0,75, satiin vähemalt × 0,6, kompensatsioon × 0,7 (kanga väärtustest).
 
 Allikad: Ink/Stitch'i lähtekood (vaikeväärtused: reavahe 0,25, satiin 0,4, lühikesed pisted 0,25 mm / 15%, 4 nihet, alustikk 3 × reavahe). Tööstuslikud digiteerimisjuhendid (EmbroideryHoop, Embroidery Legacy, Forum fonts, mySewnet). StitchPilot (reavahe kanga järgi).
+
+### Tugimaterjal
+
+Tugimaterjal on peaaegu alati **all** (backing): kangas ja tugi pannakse koos raami või ainult tugi raami ja kangas peale (kleepuv tugi või ajutine liim). **Peale** (topping) pannakse lisaks ainult siis, kui pind on karvane või tekstuuriga (frotee, fliis, piké, sametkangas) või kiri on väike: see hoiab pisteid kangasse vajumast.
+
+| Liik | Mis | Millal |
+|---|---|---|
+| Lõigatav (cut-away) | jääb tikandi taha alles, liigne lõigatakse ~5 mm kauguselt ära | veniv kangas (T-särk, polo, dressipluus), õhuke kangas, tihe tikand; kõik, mida kantakse ja pestakse |
+| Peen võrk (no-show mesh) | õhuke lõigatav, ei paista heledast kangast läbi | heledad ja õhukesed trikood |
+| Rebitav (tear-away) | rebitakse pärast ära | stabiilne kootud kangas (puuvill, lina, teksas, kanvas) |
+| Vees lahustuv (wash-away): kile või kiuline | lahustub veega täielikult | **peal** karvasel kangal; all ainult siis, kui kangas ise on stabiilne või tagakülg peab olema puhas; vabalt seisev pits (kiuline, kahekordne) |
+| Kinnituv (fusible) / kleepuv | triigitakse või kleebitakse kanga taha | veniv kangas (koos lõigatavaga), raami panemata tikkimine |
+
+- **Trikoo ja vees lahustuv all:** pärast pesu ei hoia tikandit miski – satiin tõmbab kanga kortsu ja tikand venib. Soovita lõigatavat (heledal õhukesel peent võrku), soovi korral peale kinnituv. Kui kasutaja jääb vees lahustuva juurde, soovita kiulist (mitte kilet), kahekordset ja kerget tikandit; kompensatsioon võib vajada suurendamist – proov näitab.
+- **Tihedus ja pistete arv:** mida rohkem pisteid, seda raskem tugi või kaks kihti.
+- Tugi ei tohi raamis venida (mõni ei veni pikuti ega põiki, aga venib diagonaalis).
+- Kindlat reeglit pole: sama kanga ja tikandi puhul valivad tikkijad eri tugesid ja saavad hea tulemuse. Proov otsustab.
 
 ## 9. Automaatne valik
 

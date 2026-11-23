@@ -22,8 +22,16 @@ import design, digitize
 from shapely import affinity
 
 # machines we make files for: format, largest embroidery area (mm)
+STABILIZERS = ('cutaway', 'mesh', 'tearaway', 'washaway-film', 'washaway-fiber', 'fusible', 'sticky')
 MACHINES = {'brother': ('pes', 'Brother Innov-is V3', (300, 180)), 'janome': ('jef', 'Janome Memory Craft 550E', (200, 360))}
 
+
+
+def ascii_name(s):
+    """machine screen name in plain ASCII: the PES header stores its length in characters, so a UTF-8
+    letter (ä, õ) shifts everything after it and the file is unreadable"""
+    import unicodedata
+    return ''.join(ch for ch in unicodedata.normalize('NFKD', s) if ord(ch) < 128)
 
 def nearest(hexcol, palette):
     t = pe.EmbThread(); t.set_hex_color(hexcol)
@@ -64,9 +72,15 @@ def main():
     ap.add_argument('--thread', type=int, default=40, choices=sorted(digitize.THREADS), help='thread weight: 40 (normal) or 60 (thin, small text)')
     ap.add_argument('--plan', help='plan.json: decisions per shape (see digitize.build)')
     ap.add_argument('--set', action='append', default=[], help='parameter=value (see digitize.DEFAULTS)')
+    ap.add_argument('--stabilizer', help='backing under the fabric: ' + ', '.join(STABILIZERS) + '; combine with +, e.g. cutaway+fusible')
+    ap.add_argument('--topping', help='topping on the fabric: ' + ', '.join(STABILIZERS))
+    ap.add_argument('--hoop', help='embroidery area of the hoop in mm, e.g. 130x180 (default: the largest hoop of the machine)')
     ap.add_argument('--machines', required=True, help='brother, janome or both: brother,janome')
     a = ap.parse_args()
     mach = [m.strip().lower() for m in a.machines.split(',') if m.strip()]
+    for opt in (a.stabilizer, a.topping):
+        for v in (opt or '').split('+'):
+            if v and v not in STABILIZERS: ap.error(f'unknown stabilizer {v}: ' + ', '.join(STABILIZERS))
     fmts = [MACHINES[m][0] for m in mach]
     cfg = dict(digitize.FABRICS[a.fabric]) if a.fabric else {}
     cfg['fill_angle'] = a.angle
@@ -77,7 +91,10 @@ def main():
     els = design.load(a.svg, a.background)
     os.makedirs('outpos', exist_ok=True); os.makedirs('out', exist_ok=True)
     meta = dict(name=a.name, date=datetime.date.today().isoformat(), params=dict(digitize.DEFAULTS, **cfg),
-                fabric=a.fabric or '', thread=a.thread, plan=a.plan or '', format=('PES v10' if a.working else 'PES v6') if 'pes' in fmts else '', jef='jef' in fmts, files=[], colors=[])
+                fabric=a.fabric or '', thread=a.thread, plan=a.plan or '',
+                choices=dict(machines=mach, hoop=a.hoop or '', sizes=a.sizes or '', scales=a.scales or '', exact=a.exact, fabric=a.fabric or '',
+                             stabilizer=a.stabilizer or '', topping=a.topping or '', thread=a.thread, angle=a.angle, sets=a.set,
+                             colors=a.color, plan=os.path.basename(a.plan) if a.plan else '', working=os.path.basename(a.working) if a.working else ''), format=('PES v10' if a.working else 'PES v6') if 'pes' in fmts else '', jef='jef' in fmts, files=[], colors=[])
     for col in dict.fromkeys(e['color'] for e in els):
         meta['colors'].append(dict(hex=col, name=names.get(col, col), brother=nearest(col, pec_threads()),
                                    janome=nearest(col, jef_threads())))
@@ -107,11 +124,12 @@ def main():
         st = [(x, y) for x, y, c in p.stitches if (c & pe.COMMAND_MASK) == pe.STITCH]
         w, h = measure(p)
         n = round(max(w, h)); fn = f'{a.name} {n:>3}'
-        label = f'{a.name[:8 - len(str(n)) - 1]} {n}'[:8]   # name on the machine screen (8 chars)
+        label = f'{ascii_name(a.name)[:8 - len(str(n)) - 1]} {n}'[:8]   # name on the machine screen (8 chars)
         for m in mach:
             _, mname, (HW, HH) = MACHINES[m]
+            if a.hoop: HW, HH = (float(v) for v in a.hoop.lower().replace('×', 'x').split('x')); mname = 'chosen'
             if not ((w <= HW and h <= HH) or (w <= HH and h <= HW)):
-                print(f'WARNING: {fn} ({w:.0f} x {h:.0f} mm) does not fit the {mname} hoop {HW} x {HH} mm')
+                print(f'WARNING: {fn} ({w:.0f} x {h:.0f} mm) does not fit the {mname} hoop {HW:g} x {HH:g} mm')
         if 'jef' in fmts:                                    # Janome: centred
             pe.write_jef(p, f'out/{fn}.jef', {'trims': True}); bmp(p, f'out/{fn}.bmp')
         dx, dy = -math.floor(min(x for x, y in st) + 0.5), -math.floor(min(y for x, y in st) + 0.5)   # min rounds to 0

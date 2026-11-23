@@ -192,7 +192,7 @@ DEFAULTS = dict(
     comp_stretch=0.0,   # stretchy fabric: compensation varies with stitch direction, comp x (1 -/+ s/2);
     stretch_angle=0.0,  # ... most along this direction (degrees in the design; 0 = across, as a T-shirt front
                         # hooped straight: knit stretches most along its courses)
-    run_tol=0.1,        # running stitch may stray at most this far from a curved path, mm
+    run_tol=0.05,       # running stitch may stray at most this far from a curved path, mm (+ up to 0.07 from the 0.1 mm grid)
     stroke_as_fill=0.8, # strokes at least this wide (mm) are stitched as shapes
     overlap=0.3,        # colour overlap under the shape on top, mm
     trim=2.0,           # cut the thread when the next start is farther, mm
@@ -200,6 +200,8 @@ DEFAULTS = dict(
     satin_pull_pct=0.0, # satin: widen columns by this % of their width (pull compensation)
     satin_push=0.0,     # satin: shorten free column ends by this many mm (push compensation)
     satin_short=0.25,   # satin curves: inner points closer than this (mm) get a short stitch
+    satin_short_inset=(0.15, 0.3),  # ... shortened by these shares of the stitch, in turn
+    satin_hairpin='auto',   # narrow U-turns: 'auto' (one fanned column when rounded outside, else split), 'fan' or 'split'
     satin_min=1.0,      # satin columns narrower than this (mm) are made this wide ...
     satin_widen_max=0.3,  # ... but at most this much wider (mm), so small text keeps its counters open
     satin_force_max=10.0,  # even a plan cannot force satin on a shape wider than this (mm, average): tatami
@@ -305,7 +307,8 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
         SAT.OPTS.update(pull_mm=float(c['comp']), stretch=float(c['comp_stretch']), stretch_angle=float(c['stretch_angle']), pull_pct=float(c['satin_pull_pct']), push_mm=float(c['satin_push']),
                         short_dist=float(c['satin_short']), split_len=float(c['satin_split']), mitre_max=float(c['satin_mitre']), reach=float(c['satin_reach']), gap_min=float(c['satin_gap']), min_width=float(c['satin_min']), max_widen=float(c['satin_widen_max']),
                         contour_from=float(c['satin_contour_from']), german_from=float(c['satin_german_from']),
-                        underlay=c.get('underlay'))
+                        short_inset=tuple(c['satin_short_inset']) if isinstance(c['satin_short_inset'], (list, tuple)) else (float(c['satin_short_inset']),),
+                        hairpin=c['satin_hairpin'], underlay=c.get('underlay'))
     set_satin(c)
     # scale so the longer side of the whole design = size_mm
     from shapely.ops import unary_union
@@ -471,7 +474,8 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
 
     def contour(p, c=c):
         """contour fill: rows follow the outline inwards (rounded shapes look domed, pull is even).
-        While the shape stays one piece without holes the rows form one spiral (no seam of hops);
+        While the shape stays one piece without holes the rows form one spiral (no seam of hops); a band
+        with one hole is two spirals (from the outer edge in, then from the middle out to the hole);
         otherwise each ring is sewn on its own, starting next to where the last one ended."""
         sp = c['fill_spacing']
         for q in polys(p.buffer(-0.35)):                           # edge underlay
@@ -491,6 +495,20 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
                 pts = spiral([levels[t][0].exterior for t in range(i, j + 1)], cur[0], c['fill_maxlen'])
                 stitch_block(pts, connect=not first and cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
                 first = False; i = j + 1; continue
+            # a ring-shaped band (one piece, one hole): the rows from the outer edge and the rows around the
+            # hole are two concentric families; each is sewn as one spiral (no seam where a ring would start)
+            annulus = lambda L: len(L) == 1 and len(L[0].interiors) == 1
+            if annulus(levels[i]):
+                j = i
+                while j + 1 < len(levels) and annulus(levels[j + 1]): j += 1
+                if j > i:
+                    outer_r = [levels[t][0].exterior for t in range(i, j + 1)]
+                    inner_r = [levels[t][0].interiors[0] for t in range(j, i - 1, -1)]   # from the middle out to the hole
+                    for fam in (outer_r, inner_r):
+                        pts = spiral(fam, cur[0], c['fill_maxlen'])
+                        stitch_block(pts, connect=not first and cur[0] is not None and math.dist(cur[0], pts[0]) <= c['trim'])
+                        first = False
+                    i = j + 1; continue
             rings = [r for q in levels[i] for r in [q.exterior] + list(q.interiors) if r.length > 0.6]
             rings.sort(key=lambda r: r.distance(Point(cur[0])) if cur[0] else 0)
             for r in rings:
@@ -529,7 +547,10 @@ def build(elements, size_mm, threads, cfg=None, ref_size=None, plan=None, scale=
         if c['fill_border'] > 0: border(p, c)
 
     def spiral(rings, near, step):
-        """one continuous path from the outer ring inwards: along ring k the path drifts to ring k+1"""
+        """one continuous path from the outer ring inwards: along ring k the path drifts to ring k+1.
+        The first ring is sewn once in full before the drift starts, otherwise the edge just behind the
+        start would be one row spacing short (a thin wedge of bare fabric)."""
+        if len(rings) > 1: rings = [rings[0]] + list(rings)
         out = []
         start = Point(near) if near else Point(rings[0].coords[0])
         for k, r in enumerate(rings):

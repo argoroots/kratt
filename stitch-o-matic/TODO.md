@@ -53,11 +53,19 @@ Tikkimise võtted, mida `digitize.py` veel ei tee. Iga rea juures on, mis see on
 
 ## Kattuvuse kontrolli leitud (testileht, 2026-11-22)
 
-D4 äärisega kolmnurga tipud ja E4 kontuuritäite keskkoht on parandatud (ALGORITHMS.md, Täidise erijuhud). Lahtiseks jäid:
+Parandatud 2026-11-23 (ALGORITHMS.md, Täidise erijuhud ja Satiin):
+- E1 juuksenõela pööre (väljast ümar, seest teravaks): üks sammas, pisted lehvikuna ümber sisemise tipu; varem kaks kattuvat sammast.
+- E4 rõngas (kontuuritäide augu ümber): kaks spiraali (väljast sisse, keskelt augu poole), õmblust pole; esimene ring tikitakse enne triivi täis, et serva taha ei jääks kiilu.
+- A2 sirgpiste kurvil: lubatud kõrvalekalle 0,05 mm (oli 0,1); mõõdetult kuni ~0,08 mm, sellest ~0,07 tuleb faili 0,1 mm sammust.
+- Pöörete proov (5 varianti, 2026-11-23): terav kitsas pööre jääb poolitatuks (variant 1 parim); väljast ümar kitsas pööre on üks sammas, haarad jätkuvad tegeliku tipuni ja pisted pöörduvad lehvikuna (varem jäi üks haar tipust allapoole ja serva jäi pragu).
+- Alustikke liik valitakse joonistatud laiuse järgi (kompensatsioon maha), servajooned joonistatud servast sisse: 1,7 mm joonel said haarad varem eri alustikke ja üks paistis laiem.
+- A tipp: tipu alla jäi 0,3 mm kolmnurk, kui haara pikendus oleks läinud üle joonise serva; nüüd pikeneb nii kaugele, kui joonise sees ruumi on.
+- E püstpost: läbiv sammas lõpeb joonise servas nagu vaba ots (varem kompensatsiooni võrra üle, eeldatavas välimuses ~0,3 mm kriipsudest kõrgemal).
+- Täpitähed nimes (ä, õ) rikkusid PES-faili (pyembroidery kirjutab pikkuse tähtedes, baite rohkem); masinaekraani nimi on nüüd ASCII.
+
+Lahtiseks jäid:
 
 | Koht | Mis | Mõte |
 |---|---|---|
-| E1, A1 juuksenõela pöörded (150–160°) | jagatakse eraldi sammasteks, mis kattuvad; pöördes on näha suuna muutus | pöörde ümber lehvik (radiaalsed pisted) nagu kõveral |
-| E4 suur | kontuuritäite spiraali ringide vahetuskoht (õmblus) | ringide vahetus hajutada mööda ringi |
-| A2 | sirgpiste kurvil kuni ~0,15 mm joonest kõrval | lühem piste kõveral |
+| Lehviku sisemine tipp | tihedus kõrge (punane tihedusekaardil) | sisemisel poolel lühendatud pisted, nagu ringil |
 | Suunaline kompensatsioon | eeldab, et toode on raamis sirge | küsida, kui pole |

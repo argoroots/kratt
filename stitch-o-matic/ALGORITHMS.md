@@ -45,6 +45,15 @@ Peatus on värvivahetus sama niidiga; `meta.json` → `stops` ja `blocks` (niidi
 - **Kontuuritäite keskkoht:** viimane ring jätab kuni ühe reavahe laiuse ava (ellipsil pilu pika telje suunas). Keskele tikitakse sirgpiste mööda kujundi pikka telge, kolme ringi kaugusele, kus ringide teravad otsad veel lahku jäävad. Auguga kujundil (rõngas) seda ei tehta.
 
 
+- **Rõngas kontuuritäitega** (kujund ühe auguga): servast sissepoole minevad read ja augu ümber minevad read on kaks samakeskset perekonda; kumbki tikitakse ühe spiraalina (väljast sisse, siis keskelt augu poole), nii et ringide algust (õmblust) pole.
+- **Spiraali algus:** esimene ring tikitakse enne triivi järgmisele täis, muidu jääks alguse taha serva üks reavahe laiune kiil.
+- **Sirgpiste kõveral:** piste on lühem, kui muidu kalduks joonest üle 0,05 mm (`run_tol`).
+- **Satiini juuksenõel:** kui pööre on väljast ümar (ükski välisserva tipp ei pöördu üle 40°, kokku ≥ 90°) ja seest terav, jääb sammas üheks ja pisted pöörduvad lehvikuna ümber sisemise tipu. Mõlemalt poolt terav pööre (päris nurk) jagatakse endiselt sammasteks.
+- **Kitsas V (haarad lähevad sõlmest kõrvuti välja, vahe alla 70°):** kui tegeliku tipu (haarade sirgete osade keskjoonte lõikepunkt) juures on välisserv ümar, liidetakse haarad üheks sambaks läbi selle punkti ja lühike tipu jupp jäetakse ära; pisted pöörduvad seal lehvikuna. Terav tipp (mitre) jääb poolitatuks – proovis oli see parim. `satin_hairpin`: `auto` (vaikimisi), `fan` (alati üks sammas), `split` (alati kaks).
+- **Alustikke liik** valitakse joonistatud laiuse järgi (veeru laius miinus 2 × kompensatsioon) ja servajooned mõõdetakse joonistatud servast: muidu sai 1,7 mm joon servajooned, mis jäid pärast kokkutõmbumist satiinist välja.
+- **Sammas, mis lõpeb teise vastu** (A tipp, M keskel): pikeneb, kuni mõlemad küljed on teise sees; kui see läheks üle joonise serva, pikeneb nii kaugele, kui serva sees saab (varem jäi siis pikendamata ja tipu alla jäi kolmnurk).
+- **Läbiv sammas** (E post nurgas) lõpeb joonise servas nagu vaba ots: sammast otsa ei tõmmata kokku (pisted on servaga paralleelsed), vaid lükatakse välja; risti kriipsu külg tõmbub kompensatsiooni võrra tagasi servani.
+
 ## Eeldatav välimus (preview.look)
 
 Fail ei ole see, mis kangale jääb: satiin tõmbab kangast piste suunas kokku (selle vastu on tõmbekompensatsioon) ja lükkab sammast piki pikemaks. Eeldatav välimus teeb selle tagasi kanga enda arvudega:

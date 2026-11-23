@@ -181,7 +181,7 @@ def main():
         j.stitches = [[x - round(cx), y - round(cy), c] for x, y, c in out.stitches]
         pe.write_jef(j, f'out/{a.name}.jef', {'trims': True}); gen.bmp(j, f'out/{a.name}.bmp')
     out.translate(-mx, -my)
-    label = a.name[:8]; out.metadata('name', label)
+    label = gen.ascii_name(a.name)[:8]; out.metadata('name', label)
     if 'brother' in mach:
         pe.write_pes(out, f'outpos/{a.name}.pes', {'version': 6})
         if a.working:

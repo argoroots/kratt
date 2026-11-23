@@ -98,19 +98,24 @@ def cover(c):
         ('Väike kiri loetamatu', 'Suurem suurus')]],
         [80 * mm, 90 * mm])
     test_t.setStyle(TableStyle([('TOPPADDING', (0, 0), (-1, -1), 1.2), ('BOTTOMPADDING', (0, 0), (-1, -1), 1.2)]))
+    cr = choice_rows()
+    choice_t = Table([[Paragraph(k, sm), Paragraph(v, sm)] for k, v in cr], colWidths=[38 * mm, W - 36 * mm - 38 * mm]) if cr else None
+    if choice_t: choice_t.setStyle(TableStyle([('TOPPADDING', (0, 0), (-1, -1), 1), ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('LEFTPADDING', (0, 0), (-1, -1), 0), ('VALIGN', (0, 0), (-1, -1), 'TOP')]))
     labels = ' / '.join(f['label'] for f in META['files'])
     story = [Paragraph(f'{NAME} – tikkimisfailid', h1),
              Paragraph(f"{FMT} · {len(FILES)} faili · {DATE}", sm),
              Paragraph('Failid', h2), files_t, Spacer(1, 3),
              Paragraph(f'Nimi masinas: {labels}.', sm),
              Paragraph('Värvid', h2), col_t,
+             *([Paragraph('Valikud', h2), choice_t] if choice_t else []),
              Paragraph('Kuidas on tehtud', h2),
              *([B(f"Laiad kujundid: servaalustikk + ristialustikk ({num(PR.get('fill_under_spacing', 2.0))} mm) + tatami {num(PR['fill_angle'])}°, reavahe {num(PR['fill_spacing'])} mm (0,1 mm sammul), osad ülevalt alla, osade vahel niidilõige.")] if 'tatami' in KIND else []),
              *([B(f"Kitsad kujundid ja tekst: satiin {num(PR['satin_spacing'])} mm, alustikk laiuse järgi (kitsal keskjoon, laiemal servad); sama kuju tikitakse alati ühtemoodi.")] if 'satin' in KIND else []),
              *([B(f"Peened jooned: {int(PR['run_passes'])}× sirgpiste.")] if 'run' in KIND else []),
              *([B(f"Ääris: täidise serval satiinriba {num(PR.get('fill_border', 0) or PR.get('applique_border', 3))} mm, nurgad pöördega; varjab täidise serva ja tõmbe.")] if 'border' in KIND else []),
              *([B(f"Serv: kujundi peale {OUTLINE_N}× sirgpiste mööda serva; teeb serva teravaks ja peidab ridade otsad.")] if 'outline' in KIND else []),
-             *([B(f"Kangas: {FABRIC_ET.get(META['fabric'], META['fabric'])}; tugimaterjal: {STABILIZER_ET.get(META['fabric'], 'rebitav või lõigatav')}.")] if META.get('fabric') else []),
+             *([B("Trikoo ja vees lahustuv tugi all: pärast pesu ei toeta tikandit miski ja see võib kortsu tõmbuda. Kindlam on lõigatav (heledal õhukesel peen võrk); kui jääd vees lahustuva juurde, kasuta kiulist ja kahekordset.")]
+               if META.get('fabric') in ('jersey', 'fleece') and 'washaway' in CH.get('stabilizer', '') and 'cutaway' not in CH.get('stabilizer', '') and 'mesh' not in CH.get('stabilizer', '') else []),
              *([B("Niit: 60 wt (peenem kui tavaline 40 wt), nõel 65/9; pisted tihedamad ja kitsamad, et väike kiri jääks lahti. 40 wt niidiga see fail ei sobi.")] if int(META.get('thread', 40)) == 60 else []),
              *([B(f"Kontuuritäide: read käivad kujundi servaga paralleelselt, reavahe {num(PR['fill_spacing'])} mm, üks pidev spiraal (ilma õmbluseta).")] if 'contour' in KIND else []),
              *([B(f"Ristpiste: ruut {num(PR.get('cross_size', 2.0))} mm, ruudustik ühine kogu tikandil; rist = kaks diagonaali.")] if 'cross' in KIND else []),
@@ -120,7 +125,7 @@ def cover(c):
              B(f"Iga suuruse kohta 3 joonist: <b>eeldatav välimus</b> (pärast tikkimist: kangas tõmbab satiinipistete otsi umbes {num(PR['comp'])} mm sisse ja lükkab sambaid veidi pikemaks – hinnang, tegeliku näitab proov), <b>pistete käik</b> (alustikk helesinine; hilisem piste on valge äärisega ja jääb peale) ja <b>niidi tihedus</b> (roheline õhuke … punane liiga paks; kollased ja punased kohad vaata proovil üle)."),
              Paragraph('Kuidas testida', h2),
              B('Masinas: kontrolli suurust ja raami, tee jälgimine (trace).'),
-             B(f"Tiki jäägile: sama kangas, tugimaterjal {STABILIZER_ET.get(META.get('fabric'), 'rebitav või lõigatav')}, uus tikkimisnõel {'65/9' if int(META.get('thread', 40)) == 60 else '75/11'}."),
+             B(f"Tiki jäägile: sama kangas, tugimaterjal {backing()}" + (f" ja peale {stab_text(CH['topping'])}" if CH.get('topping') else '') + f", uus tikkimisnõel {'65/9' if int(META.get('thread', 40)) == 60 else '75/11'}."),
              B('Jälgi tikkimist; terava heli või niidi katkemise korral peata ja märgi koht. Võrdle tulemust 1:1 joonisega.'),
              Spacer(1, 3), test_t]
     disc = Paragraph('<b>Märkus.</b> Joonised on mõõtkavas 1 : 1: prindi 100 % (mitte „Fit to page“), mõõtjoonlaud = 50 mm. Mõõdud on pistete äärmiste punktide järgi, telgjooned = raami kese. Tee enne kasutamist proovitikkimine.', ParagraphStyle('d', parent=sm, textColor=GREY))
@@ -167,6 +172,43 @@ FABRIC_ET = {'linen': 'linane', 'cotton': 'puuvill', 'denim': 'teksas', 'canvas'
 STABILIZER_ET = {'linen': 'rebitav', 'cotton': 'rebitav', 'denim': 'rebitav', 'canvas': 'rebitav',
                  'jersey': 'lõigatav + kinnitus', 'fleece': 'lõigatav, peale vees lahustuv kile',
                  'terry': 'lõigatav, peale vees lahustuv kile', 'leather': 'rebitav', 'vinyl': 'rebitav'}
+STAB_ET = {'cutaway': 'lõigatav', 'mesh': 'peen võrk (no-show mesh)', 'tearaway': 'rebitav', 'washaway-film': 'vees lahustuv kile',
+           'washaway-fiber': 'vees lahustuv kiuline', 'fusible': 'kinnituv (triigitav)', 'sticky': 'kleepuv'}
+MACHINE_ET = {'brother': ('Brother Innov-is V3', '300 × 180'), 'janome': ('Janome Memory Craft 550E', '200 × 360')}
+CH = META.get('choices', {})
+
+
+def stab_text(v):
+    return ' + '.join(STAB_ET.get(x, x) for x in v.split('+')) if v else ''
+
+
+def backing():
+    """the backing the user chose, else the fabric's usual one marked as a suggestion"""
+    if CH.get('stabilizer'): return stab_text(CH['stabilizer'])
+    return STABILIZER_ET.get(META.get('fabric'), 'rebitav või lõigatav') + ' (soovitus)'
+
+
+def choice_rows():
+    """everything the user chose or set, for the cover"""
+    rows = []
+    if CH.get('machines'): rows.append(('Masin', ', '.join(MACHINE_ET.get(m, (m,))[0] for m in CH['machines'])))
+    if CH.get('machines'):
+        rows.append(('Raam', (CH['hoop'].replace('x', ' × ') + ' mm (valitud)') if CH.get('hoop')
+                     else '; '.join(f"{MACHINE_ET[m][1]} mm" for m in CH['machines'] if m in MACHINE_ET) + ' (masina suurim)'))
+    if CH.get('sizes'): rows.append(('Suurused', CH['sizes'].replace(',', ', ') + ' mm, ' + ('tikandi tegelik mõõt' if CH.get('exact') else 'pildi mõõt')))
+    if CH.get('scales'): rows.append(('Mõõtkava', CH['scales'].replace(',', ', ') + ' mm SVG ühiku kohta (sama mis teisel variandil)'))
+    rows.append(('Kangas', FABRIC_ET.get(META.get('fabric'), META.get('fabric')) if META.get('fabric') else 'valimata (üldised seaded)'))
+    rows.append(('Tugimaterjal all', backing()))
+    rows.append(('Tugimaterjal peal', stab_text(CH.get('topping', '')) or '–'))
+    rows.append(('Niit', f"{int(META.get('thread', 40))} wt"))
+    if 'angle' in CH: rows.append(('Täidise nurk', f"{num(CH['angle'])}°"))
+    if CH.get('colors'): rows.append(('Niidinimed', ', '.join(c.replace('=', ' → ', 1) for c in CH['colors'])))
+    if CH.get('plan'): rows.append(('Tehnikad', 'kujundite kaupa valitud (' + CH['plan'] + ')'))
+    if CH.get('sets'): rows.append(('Muud seaded', ', '.join(CH['sets'])))
+    if CH.get('working'): rows.append(('PES päis', 'masina töötavast failist ' + CH['working']))
+    return rows
+
+
 KINDS = {'appearance': 'EELDATAV VÄLIMUS', 'stitches': 'PISTETE KÄIK', 'density': 'NIIDI TIHEDUS'}   # page order
 
 
@@ -245,7 +287,7 @@ def sheet(c, d, page, total, kind):
     tx = M + (W - 2 * M) * 5 / 6; TBW = (W - M - 2 * mm) - tx; ty0 = M + 2 * mm; ty1 = H - M - 2 * mm
     c.setStrokeColor(INK); c.setLineWidth(0.4); c.line(tx, ty0, tx, ty1)
     k0 = COLS[0]
-    thread = (k0['name'] + ' ' + k0['hex'].upper()) if len(COLS) == 1 else f'{len(COLS)} värvi (lk 1)'
+    thread = ((k0['name'] + ' ' + k0['hex'].upper()) if k0['name'].lower() != k0['hex'].lower() else k0['hex'].upper()) if len(COLS) == 1 else f'{len(COLS)} värvi (lk 1)'   # a colour without a name is shown once
     rows = [('PROJEKT', NAME), ('JOONIS', KINDS[kind]), ('FAIL', d['f']), ('FORMAAT', FMT),
             ('MÕÕDUD', f"{fmt(d['w'])} × {fmt(d['h'])} mm"), ('PISTED', str(d['n'])), ('NIIDILÕIKED', str(d['t'])),
             ('NIIT', thread), ('BROTHER', f"{k0['brother']['code']} {k0['brother']['name']}" if len(COLS) == 1 else '–'), ('MÕÕTKAVA', '1 : 1'),
