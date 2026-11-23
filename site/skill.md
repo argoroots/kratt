@@ -1,6 +1,6 @@
 ---
 name: kratt
-description: Kasuta, kui kasutaja palub seadistada kratt.roots.ee/skill.md või paigaldada tikkimise oskused STITCH-O-MATIC, Tikand Entusse või Tikandikogu.
+description: Kasuta, kui kasutaja palub paigaldada või seadistada kratt.roots.ee/skill.md (nt „Paigalda kratt.roots.ee/skill.md – …“ või „Set up kratt.roots.ee/skill.md“) või paigaldada tikkimise oskused STITCH-O-MATIC, Tikand Entusse või Tikandikogu.
 ---
 
 # Kratt – tikkimise oskuste paigaldamine
@@ -13,7 +13,7 @@ Kratt on kolm Claude'i oskust (skilli) masintikkimiseks:
 
 Lähtekood: https://github.com/argoroots/kratt (litsents CC BY-NC-SA 4.0).
 
-Paigalda see oskus, mille kasutaja käsus nimetas (nt `Set up kratt.roots.ee/skill.md – Tikandikogu`). Kui ta ei nimetanud ühtegi, küsi, milliseid. Vali allpool juhend selle keskkonna järgi, kus sa töötad.
+Paigalda see oskus, mille kasutaja käsus nimetas (nt `Paigalda kratt.roots.ee/skill.md – Tikandikogu`). Kui ta ei nimetanud ühtegi, küsi, milliseid. Vali allpool juhend selle keskkonna järgi, kus sa töötad.
 
 ## Claude Code
 

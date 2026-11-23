@@ -50,7 +50,7 @@ Claude pakub iga kujundi juures sobiva tehnika välja ja ütleb, miks. Otsuse te
 Kopeeri see käsk Claude'ile või oma agendile:
 
 ```
-Set up kratt.roots.ee/skill.md – STITCH-O-MATIC
+Paigalda kratt.roots.ee/skill.md – STITCH-O-MATIC
 ```
 
 Ta juhendab sind edasi samm-sammult. Vaata ka [kratt.roots.ee](https://kratt.roots.ee).
