@@ -13,7 +13,7 @@ Kratt on kolm Claude'i oskust (skilli) masintikkimiseks:
 
 Lähtekood: https://github.com/argoroots/kratt (litsents CC BY-NC-SA 4.0).
 
-Paigalda see oskus, mille kasutaja käsus nimetas (nt `Paigalda kratt.roots.ee/skill.md – Tikandikogu`). Kui ta ei nimetanud ühtegi, küsi, milliseid. Vali allpool juhend selle keskkonna järgi, kus sa töötad.
+Paigalda see oskus, mille kasutaja käsus nimetas (nt `Paigalda kratt.roots.ee/skill.md – Tikandikogu`). Kui ta ei nimetanud ühtegi, küsi, milliseid. **Ära küsi, kuhu paigaldada.** Kui sa ei tööta Claude Code'i terminalis, oled Claude'i rakenduses – kasuta kohe järgmist osa.
 
 ## Claude (claude.ai, töölaua- ja mobiilirakendus)
 
