@@ -1,52 +1,64 @@
 """PES v6 (pyembroidery) -> PES v10 using the header of a v10 file that works on the target machine.
 Stitches and the PEC block (what the machine sews) stay unchanged."""
 import struct
+
 import pyembroidery as pe
 
 
-def _pstr(s):
-    b = s.encode('latin-1', 'replace')[:255]
-    return bytes([len(b)]) + b
+def _pascal_string(text):
+    """length byte + latin-1 bytes, as the PES header stores strings"""
+    data = text.encode('latin-1', 'replace')[:255]
+    return bytes([len(data)]) + data
 
 
-def _skip_str(b, pos):
-    return pos + 1 + b[pos]
+def _skip_string(data, position):
+    return position + 1 + data[position]
 
 
-def _v10_layout(b):
+def _v10_layout(data):
     """positions in a #PES0100 header: metadata strings, hoop name string, thread count"""
-    assert b[:8] == b'#PES0100', 'working file is not PES v10'
-    meta = 16                       # 5 strings: name, category, author, keywords, comments
-    pos = meta
-    for _ in range(5): pos = _skip_str(b, pos)
-    meta_end = pos
-    hoop = pos + 14; hoop_end = _skip_str(b, hoop)
-    img = hoop_end + 38; img_end = _skip_str(b, img)
-    threads = img_end + 34 + 6      # programmable fills, motifs, feather patterns (2 bytes each)
-    return meta, meta_end, hoop, hoop_end, threads
+    assert data[:8] == b'#PES0100', 'working file is not PES v10'
+    metadata = 16                       # 5 strings: name, category, author, keywords, comments
+    position = metadata
+    for _ in range(5):
+        position = _skip_string(data, position)
+    metadata_end = position
+    hoop = position + 14
+    hoop_end = _skip_string(data, hoop)
+    image = hoop_end + 38
+    image_end = _skip_string(data, image)
+    threads = image_end + 34 + 6        # programmable fills, motifs, feather patterns (2 bytes each)
+    return metadata, metadata_end, hoop, hoop_end, threads
 
 
-def _v6_threads(b):
+def _v6_threads(data):
     """thread section (count + threads) and the start of the CEmbOne block in a #PES0060 file"""
-    assert b[:8] == b'#PES0060'
-    pos = 16
-    for _ in range(5): pos = _skip_str(b, pos)
-    pos += 36; pos = _skip_str(b, pos); pos += 24 + 6
-    ce = b.find(b'\x07\x00CEmbOne')
-    return pos, ce
+    assert data[:8] == b'#PES0060'
+    position = 16
+    for _ in range(5):
+        position = _skip_string(data, position)
+    position += 36
+    position = _skip_string(data, position)
+    position += 24 + 6
+    emb_one = data.find(b'\x07\x00CEmbOne')
+    return position, emb_one
 
 
-def to_v10(src, dst, working, name):
-    v6 = open(src, 'rb').read(); W = open(working, 'rb').read()
-    pec6 = struct.unpack('<I', v6[8:12])[0]
-    th6, ce6 = _v6_threads(v6)
-    meta, meta_end, hoop, hoop_end, thw = _v10_layout(W)
-    head = (W[:meta] + _pstr(name) + _pstr('') * 4 + W[meta_end:hoop] + _pstr('') + W[hoop_end:thw])
-    out = bytearray(head + v6[th6:ce6] + v6[ce6:])
-    out[0:8] = b'#PES0100'
-    out[8:12] = struct.pack('<I', pec6 + len(head) - th6)
-    open(dst, 'wb').write(out)
-    a, b = pe.read(src), pe.read(dst)
-    if [s[:] for s in a.stitches] != [s[:] for s in b.stitches]:
-        raise RuntimeError(f'{dst}: stitches differ after v10 conversion')
-    return b
+def to_v10(source, destination, working, name):
+    """write destination: the v10 header of `working` (name = `name`) + the threads and blocks of the
+    v6 `source`; checks that the stitches read back unchanged"""
+    v6 = open(source, 'rb').read()
+    working_data = open(working, 'rb').read()
+    pec_offset = struct.unpack('<I', v6[8:12])[0]
+    threads_v6, emb_one_v6 = _v6_threads(v6)
+    metadata, metadata_end, hoop, hoop_end, threads_working = _v10_layout(working_data)
+    header = (working_data[:metadata] + _pascal_string(name) + _pascal_string('') * 4 + working_data[metadata_end:hoop]
+              + _pascal_string('') + working_data[hoop_end:threads_working])
+    result = bytearray(header + v6[threads_v6:emb_one_v6] + v6[emb_one_v6:])
+    result[0:8] = b'#PES0100'
+    result[8:12] = struct.pack('<I', pec_offset + len(header) - threads_v6)
+    open(destination, 'wb').write(result)
+    before, after = pe.read(source), pe.read(destination)
+    if [s[:] for s in before.stitches] != [s[:] for s in after.stitches]:
+        raise RuntimeError(f'{destination}: stitches differ after v10 conversion')
+    return after

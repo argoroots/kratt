@@ -2,99 +2,98 @@
 
 Each element: dict(geom, color, kind)
   kind 'fill' : geom is a (Multi)Polygon
-  kind 'run'  : geom is a LineString (thin stroke)
+  kind 'run'  : geom is a LineString (thin stroke), with 'width' (SVG units)
 Background-coloured shapes are not stitched: they cut away what lies under them.
-Shapes of another colour on top cut away the part below them (with an overlap).
+Shapes of another colour on top cut away the part below them (with an overlap), see knockout().
 """
 import svgelements as se
-from shapely.geometry import Polygon, MultiPolygon, LineString
+from shapely.geometry import LineString, Polygon
 from shapely.ops import unary_union
 
+CURVE_STEPS = 24       # points per curve segment
 
-def _rings(path, steps=24):
-    rings = []
-    for sub in path.as_subpaths():
-        pts = []
-        for seg in se.Path(sub):
-            if isinstance(seg, (se.Move, se.Line, se.Close)):
-                if seg.end is not None: pts.append((seg.end.x, seg.end.y))
+
+def _subpath_points(path, steps=CURVE_STEPS):
+    """for every subpath: its points, curves sampled in `steps` pieces"""
+    for subpath in path.as_subpaths():
+        points = []
+        for segment in se.Path(subpath):
+            if isinstance(segment, (se.Move, se.Line, se.Close)):
+                if segment.end is not None:
+                    points.append((segment.end.x, segment.end.y))
                 continue
             for i in range(1, steps + 1):
-                q = seg.point(i / steps); pts.append((q.x, q.y))
-        if len(pts) >= 3:
-            rings.append(Polygon(pts).buffer(0))
-    return rings
+                q = segment.point(i / steps)
+                points.append((q.x, q.y))
+        yield points
 
 
 def _polygon(path):
     """even-odd fill: biggest rings first, contained rings become holes"""
-    rings = sorted(_rings(path), key=lambda g: -g.area)
-    geom = None
-    for r in rings:
-        if geom is None: geom = r
-        elif geom.buffer(-1e-6).contains(r): geom = geom.difference(r)
-        else: geom = geom.union(r)
-    return geom
+    rings = sorted((Polygon(points).buffer(0) for points in _subpath_points(path) if len(points) >= 3), key=lambda g: -g.area)
+    shape = None
+    for ring in rings:
+        if shape is None:
+            shape = ring
+        elif shape.buffer(-1e-6).contains(ring):
+            shape = shape.difference(ring)
+        else:
+            shape = shape.union(ring)
+    return shape
 
 
-def _polyline(path, steps=24):
-    out = []
-    for sub in path.as_subpaths():
-        pts = []
-        for seg in se.Path(sub):
-            if isinstance(seg, (se.Move, se.Line, se.Close)):
-                if seg.end is not None: pts.append((seg.end.x, seg.end.y))
-                continue
-            for i in range(1, steps + 1):
-                q = seg.point(i / steps); pts.append((q.x, q.y))
-        if len(pts) >= 2: out.append(LineString(pts))
-    return out
+def _polylines(path):
+    return [LineString(points) for points in _subpath_points(path) if len(points) >= 2]
 
 
-def _hex(c):
-    return None if c is None or c.value is None or c.alpha == 0 else '#%02x%02x%02x' % (c.red, c.green, c.blue)
+def _hex(colour):
+    """svgelements colour -> '#rrggbb', None when there is none or it is transparent"""
+    if colour is None or colour.value is None or colour.alpha == 0:
+        return None
+    return '#%02x%02x%02x' % (colour.red, colour.green, colour.blue)
 
 
 def load(svg_file, background='#ffffff'):
     """read the SVG; returns elements in sewing (document) order, in SVG units"""
     raw = []
-    for e in se.SVG.parse(svg_file).elements():
-        if not isinstance(e, se.Shape): continue
-        if e.values.get('display') == 'none' or e.values.get('visibility') == 'hidden': continue
-        path = se.Path(e); path.reify()
-        fill, stroke = _hex(e.fill), _hex(e.stroke)
+    for shape in se.SVG.parse(svg_file).elements():
+        if not isinstance(shape, se.Shape):
+            continue
+        if shape.values.get('display') == 'none' or shape.values.get('visibility') == 'hidden':
+            continue
+        path = se.Path(shape)
+        path.reify()
+        fill, stroke = _hex(shape.fill), _hex(shape.stroke)
         if fill:
-            g = _polygon(path)
-            if g is not None and not g.is_empty: raw.append(dict(geom=g, color=fill, kind='fill'))
-        if stroke and (e.stroke_width or 0) > 0:
-            w = e.stroke_width
-            for ln in _polyline(path):
-                raw.append(dict(geom=ln, color=stroke, kind='run', width=w))
-    bg = background.lower() if background else None
+            geometry = _polygon(path)
+            if geometry is not None and not geometry.is_empty:
+                raw.append(dict(geom=geometry, color=fill, kind='fill'))
+        if stroke and (shape.stroke_width or 0) > 0:
+            for line in _polylines(path):
+                raw.append(dict(geom=line, color=stroke, kind='run', width=shape.stroke_width))
+    background = background.lower() if background else None
     # background shapes cut away everything below them, and are not stitched
-    out = []
-    for i, el in enumerate(raw):
-        if el['color'] == bg: continue
-        if el['kind'] == 'fill':
-            cut = [r['geom'] for r in raw[i + 1:] if r['kind'] == 'fill' and r['color'] == bg]
-            if cut: el['geom'] = el['geom'].difference(unary_union(cut))
-            if el['geom'].is_empty: continue
-        out.append(el)
-    return out
+    elements = []
+    for i, element in enumerate(raw):
+        if element['color'] == background:
+            continue
+        if element['kind'] == 'fill':
+            cut = [r['geom'] for r in raw[i + 1:] if r['kind'] == 'fill' and r['color'] == background]
+            if cut:
+                element['geom'] = element['geom'].difference(unary_union(cut))
+            if element['geom'].is_empty:
+                continue
+        elements.append(element)
+    return elements
 
 
 def knockout(elements, overlap):
     """a fill of another colour lying on top cuts away the part below it, keeping `overlap` (scaled units)"""
-    for i, el in enumerate(elements):
-        if el['kind'] != 'fill': continue
-        top = [t['geom'].buffer(-overlap) for t in elements[i + 1:] if t['kind'] == 'fill' and t['color'] != el['color']]
-        top = [t for t in top if not t.is_empty]
-        if top: el['geom'] = el['geom'].difference(unary_union(top))
+    for i, element in enumerate(elements):
+        if element['kind'] != 'fill':
+            continue
+        on_top = [t['geom'].buffer(-overlap) for t in elements[i + 1:] if t['kind'] == 'fill' and t['color'] != element['color']]
+        on_top = [t for t in on_top if not t.is_empty]
+        if on_top:
+            element['geom'] = element['geom'].difference(unary_union(on_top))
     return [e for e in elements if not e['geom'].is_empty]
-
-
-def polys(g):
-    if g.is_empty: return []
-    if isinstance(g, Polygon): return [g]
-    if isinstance(g, MultiPolygon): return list(g.geoms)
-    return [p for p in getattr(g, 'geoms', []) if isinstance(p, Polygon)]

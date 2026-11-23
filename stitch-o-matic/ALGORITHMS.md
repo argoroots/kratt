@@ -3,7 +3,7 @@
 Kuidas `scripts/` teeb pisted: samm-sammult, koos arvudega. Loe seda, kui parandad koodi või kui tulemus ei vasta ootusele. Tavalise tikandi tegemiseks piisab SKILL.md-st. Reeglid ja nende põhjused on KNOWLEDGE.md-s.
 
 ## 1. Tatami
-- 0,1 mm võrk: rea samm on 0,1 mm kordne ja rea otspunktid ümardatakse oma rea joonele (`snap()`). Muu samm teeb triipe.
+- 0,1 mm võrk: rea samm on 0,1 mm kordne ja rea otspunktid ümardatakse oma rea joonele (`snap_to_grid()`). Muu samm teeb triipe.
 - Kujundi osad tikitakse samas suunas ülevalt alla, ülemise serva järjekorras; osade vahel lõige ja hüpe.
 - Iga rida algab eelmise lõpule lähemast otsast. Järgmise reani minnakse otse, kui see jääb kujundi sisse; pikk üleminek jagatakse ≤ 4 mm pisteteks. Osa pikendatakse ühe reaga ainult lõpus.
 - Läbistused on ühisel võrgul: x = (j + faas) × max piste, faas nihkub igal real 1/`fill_staggers` (4) võrra. Reaotsale lähemal kui 0,4 mm läbistust ei tehta.

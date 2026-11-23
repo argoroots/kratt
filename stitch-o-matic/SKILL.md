@@ -142,8 +142,8 @@ Pärast iga parandust tee kõik suurused uuesti, käivita kontroll ning uuenda P
 | Fail | Mida teeb |
 |---|---|
 | `design.py` | SVG → elemendid (värv, kujund/joon), taustavärvi ja pealmiste värvide väljalõige |
-| `digitize.py` | tatami, sirgpiste, `build()`, `DEFAULTS`, `FABRICS`, plaan |
-| `satin.py` | satiin (skelett, sambad, nurgad, otsad, järjekord) |
+| `digitize.py` | tatami, sirgpiste ja muud tehnikad (`PatternBuilder`), `build()`, `DEFAULTS`, `FABRICS`, plaan |
+| `satin.py` | satiin (skelett, sambad, nurgad, otsad, järjekord), `letter()` |
 | `gen.py` | kõik suurused → `out/` (PES, JEF, BMP, `meta.json`) |
 | `pes10.py` | PES v6 → v10 töötava faili päisega |
 | `check.py` | kontroll (koos kattuvusega, kui `outpos/<fail>.shapes.json` on olemas) |
@@ -154,8 +154,9 @@ Pärast iga parandust tee kõik suurused uuesti, käivita kontroll ning uuenda P
 | `optimize.py` | proovib kujundite variandid läbi → `plan.json` |
 | `pdfcad.py` | `<Nimi> - Projekt.pdf` `out/meta.json` põhjal |
 | `anim3d2.py` | 3D-animatsioon: `python3 anim3d2.py "<fail>.pes" välja.mp4 60 3 [test]` |
+| `texts.py`, `strings_et.json` | kasutajale nähtavad tekstid (PDF, masina peatused, proovilehe `.txt`, animatsioon) eesti keeles; teine keel: `strings_<keel>.json` ja `STITCH_LANG=<keel>` |
 
-Käivitus töökaustas (skriptid sinna kopeeritud):
+Käivitus töökaustas (skriptid ja `strings_et.json` sinna kopeeritud):
 ```
 python3 swatch.py pilt.svg --size 200 --list
 python3 optimize.py pilt.svg --size 150 --ref-size 200 --fabric linen --angle 45 [--plan plan.json] --out plan.json
