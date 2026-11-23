@@ -220,7 +220,7 @@
 .fa .ptbl td.pd .pnm { display: inline; color: var(--color-fg); }
 .fa .ptbl td.pd .pds { display: block; margin-top: 2px; }
 .fa .ptbl tr.g td:first-child::before { content: none; }
-/* avatava rea nool on lahtri vasakus servas eraldi: murduv tekst jääb noolest paremale ega lähe selle alla */
+/* the arrow of an expandable row sits separately at the left edge of the cell: wrapped text stays right of the arrow and does not go under it */
 .fa tr.g td:first-child, .fa .ptbl tr.s td:first-child, .fa table.loans2 tbody tr.lr td:first-child { position: relative; padding-left: 1.2em; }
 .fa tr.g td:first-child::before, .fa .ptbl tr.s td:first-child::before, .fa table.loans2 tbody tr.lr td:first-child::before { position: absolute; left: .08em; top: calc(var(--cds-pad-xs) + .4em); margin: 0; }
 .fa tr.g.open td:first-child::before, .fa .ptbl tr.s.open td:first-child::before, .fa table.loans2 tbody tr.lr.open td:first-child::before { top: calc(var(--cds-pad-xs) + .3em); margin: 0; }
@@ -273,7 +273,7 @@
   .fa .tbl, .fa .tbl.full { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-right: -.85rem; padding-right: .85rem; }
   .fa #loan-burden > table, .fa #assets table { display: block; overflow-x: auto; }
   .fa td.wfb { min-width: 4.5rem; }
-  /* Instrumentide tootlus: telefonis ainult nimi, väärtus, tootlus ja tulp; jaotus on rea puudutusel avanevas aknas */
+  /* Instrument returns: on phones only name, value, return and bar; the breakdown is in a window that opens when the row is tapped */
   .fa table.ttbl th:nth-child(2), .fa table.ttbl td:nth-child(2), .fa table.ttbl th:nth-child(n+4):nth-child(-n+7), .fa table.ttbl td:nth-child(n+4):nth-child(-n+7) { display: none; }
   .fa table.ttbl { width: 100%; table-layout: auto; }
   .fa table.ttbl td.tname { max-width: 7rem; }
@@ -439,7 +439,7 @@
   </section>
   </div>
 
-  <!-- Vara ja eesmärgid, 2. osa: netovara ning varad ja võlad -->
+  <!-- Assets and goals, part 2: net worth, assets and debts -->
   <div class="tabp t-goals o2">
   <section class="grid2 g21">
     <div class="card" id="assets" data-feature="assets">
@@ -492,7 +492,7 @@
   </section>
   </div>
 
-  <!-- Vara ja eesmärgid, 4. osa -->
+  <!-- Assets and goals, part 4 -->
   <div class="tabp t-goals o4 folds">
   <section class="card" id="timeline" data-feature="events">
     <input type="checkbox" class="cardt" id="fold-timeline"><h3><label for="fold-timeline">Suured sündmused</label></h3>
@@ -500,7 +500,7 @@
   </section>
   </div>
 
-  <!-- Tulud ja kulud, 2. osa -->
+  <!-- Income and spending, part 2 -->
   <div class="tabp t-spending folds">
     <section class="card">
       <input type="checkbox" class="cardt" id="fold-rules"><h3><label for="fold-rules">Reisid</label></h3>
@@ -518,7 +518,7 @@
     </section>
   </div>
 
-  <!-- Vara ja eesmärgid, 5. osa -->
+  <!-- Assets and goals, part 5 -->
   <div class="tabp t-goals o5 folds">
     <section class="card">
       <input type="checkbox" class="cardt" id="fold-trips"><h3><label for="fold-trips">Arvutuse alused</label></h3>
@@ -549,7 +549,7 @@
   </section>
   </div>
 
-  <!-- Vara ja eesmärgid, 3. osa -->
+  <!-- Assets and goals, part 3 -->
   <div class="tabp t-goals o3">
   <section class="grid2 g21">
   <div class="card" id="plan">

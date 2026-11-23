@@ -88,6 +88,7 @@
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
+<script src="https://analytics.entu.dev/ea.min.js" data-site="kratt.roots.ee" crossorigin="anonymous" defer></script>
 </head>
 <body>
 <main>
@@ -329,7 +330,13 @@
 <script>
 {
   // open the skill named in the address (#rahapada, #stitch-o-matic, #tikand-entusse, #tikandikogu, #leivast-redel)
-  const openFromHash = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS') d.open = true; };
+  // Entu Analytics: opening a skill and copying a command
+  const track = (name, data) => { try { if (window.analytics) window.analytics.track(name, data); } catch (e) {} };
+  let fromLink = false;
+  for (const d of document.querySelectorAll('details.skill')) {
+    d.addEventListener('toggle', () => { if (d.open) track('skill_open', {skill: d.id, from: fromLink ? 'link' : 'click'}); fromLink = false; });
+  }
+  const openFromHash = () => { const d = document.getElementById(location.hash.slice(1)); if (d && d.tagName === 'DETAILS' && !d.open) { fromLink = true; d.open = true; } };
   openFromHash(); window.addEventListener('hashchange', openFromHash);
 
   const tick = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M5 12l5 5L20 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -337,6 +344,8 @@
     const icon = b.innerHTML;
     b.addEventListener('click', async () => {
       const code = b.previousElementSibling;
+      const skill = b.closest('details.skill');
+      track('copy', {skill: skill ? skill.id : '', kind: code.tagName === 'CODE' ? 'install' : 'example', text: code.textContent.replace(/^„|“$/g, '')});
       try { await navigator.clipboard.writeText(code.textContent.replace(/^„|“$/g, '')); b.innerHTML = tick; b.classList.add('done'); b.title = 'Kopeeritud'; }
       catch (e) { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
       setTimeout(() => { b.innerHTML = icon; b.classList.remove('done'); b.title = 'Kopeeri'; }, 2000);

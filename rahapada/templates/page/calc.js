@@ -14,7 +14,7 @@
   // periods and years: config.js (written by build.py on every update)
   const PI = window.RAHAPADA.periods;
   const YEARS = PI.years;
-  // vaikimisi on valitud ainult viimane aasta; valik on aadressis y<aasta> = on/off
+  // by default only the last year is selected; the choice is in the address as y<year> = on/off
   const CUR_YEAR = YEARS[YEARS.length - 1];
   const yearOn = (y) => {
     const k = String(y).slice(0, 4),
@@ -59,8 +59,8 @@
   dash.draw('features', (el) => {
     el.textContent = [...EMPTY].map((d) => `[data-feature~="${d}"]{display:none!important}`).join('\n');
   });
-  F.MASK = '•••• €'; // peidetud summa kuvatakse nelja hägustatud keskpunktina
-  // loan status in the loan files: active/ended (or Aktiivne/Lõppenud)
+  F.MASK = '•••• €'; // a hidden amount is shown as four blurred middle dots
+  // loan status in the loan files: active/ended (or the Estonian Aktiivne/Lõppenud)
   const isActive = (s) => s === 'active' || s === 'Aktiivne';
   // names from the user's rules (rules.json settings.labels, recurring_kinds, subscription_groups, icons)
   const LABELS = window.RAHAPADA.labels || {};
@@ -70,7 +70,7 @@
   window.FA = {F, draw, isHidden, yearOn, PI, PERIODS: PI.periods, isActive, LABELS, KINDS, SUBSCRIPTION_GROUPS, ICONS};
 
   // Controls: year buttons and the € button live in the HTML; scripts only listen and set class / aria-*.
-  // aastate nupud tehakse aastate nimekirjast
+  // the year buttons are made from the list of years
   const sync = () => {
     document.querySelectorAll('.fa').forEach((r) => {
       r.classList.toggle('hide-amt', isHidden());
@@ -80,9 +80,9 @@
       .forEach((b) => b.setAttribute('aria-pressed', String(yearOn(b.dataset.year))));
     document.querySelectorAll('.ybtn[data-amt]').forEach((b) => b.setAttribute('aria-pressed', String(!isHidden())));
   };
-  // aastate nupud on joonis (data-draw="years"): tehakse aastate nimekirjast
+  // the year buttons are a drawing (data-draw="years") made from the list of years
   const onYear = (y) => {
-    // vähemalt üks aasta jääb valituks
+    // at least one year stays selected
     const sel = YEARS.filter((a) => (a === y) !== yearOn(a));
     if (!sel.length) return;
     dash.setParams(Object.fromEntries(YEARS.map((a) => ['y' + a, sel.includes(a) ? 'on' : 'off'])));
@@ -110,12 +110,12 @@
   );
   dash.onData(sync);
 
-  // P4 = praegune tase (viimased täiskuud, libisev), AE = samad kuud aasta varem
+  // P4 = current level (last full months, rolling), AE = the same months a year earlier
   const PERIODS = PI.periods,
     LAST_FULL = PI.last_full,
     WIN = PI.window,
     WIN_PREV = PI.window_prev;
-  // kuu tulemist maha minev investeering: III sammas ja aktsiate neto ost; aktsiate müük tulemit ei suurenda (invest_kuud.invest_out)
+  // investment taken off the month's result: pillar III and net stock purchases; selling stocks does not add to the result (investment_months.invest_out)
   const outOf = (ik) => {
     const I = Object.fromEntries(
       ik.map((r) => [r.month, r.invest_out !== undefined ? +r.invest_out : Math.max(0, +r.stocks_net) + +r.pension3])
@@ -183,7 +183,7 @@
       const p4 = monthRows.filter((r) => r.month >= WIN[0] && r.month <= WIN[1]),
         prevYear = monthRows.filter(inWindow(WIN_PREV));
       return [
-        // aasta varasemaga võrdlus ainult siis, kui need kuud on andmetes olemas
+        // comparison with a year earlier only when those months are in the data
         {metric: 'net', value: d3.mean(p4, net)},
         {metric: 'net_diff', value: prevYear.length ? d3.mean(p4, net) - d3.mean(prevYear, net) : null},
         {metric: 'out', value: d3.mean(p4, out)},
@@ -253,7 +253,7 @@
       const y = (yy, mx = '12') => k.filter((r) => r.month.slice(0, 4) === yy && r.month.slice(5) <= mx);
       const p4 = k.filter((r) => r.month >= WIN[0] && r.month <= WIN[1]);
       const CUR_Y = LAST_FULL.slice(0, 4),
-        PREV_YEAR = String(+CUR_Y - 1); // viimase täiskuu aasta ja eelmine aasta
+        PREV_YEAR = String(+CUR_Y - 1); // the year of the last full month and the year before
       const endPrev = v.find((r) => r.month === PREV_YEAR + '-12');
       const inv = (r) => +r.stocks_net + +r.pension3;
       const fl = (yy) =>
@@ -364,7 +364,7 @@
       const card = +((assetRows.find((r) => r.item === G.card_item) || {}).value || 0);
       const Y = String(d3.max(tx, (r) => r.date)).slice(0, 4),
         TRAVEL_BUDGET = G.travel_budget ?? 0;
-      // reisi aasta järgi (reisi lõpu kuupäev), nagu reiside tabelis: ettemaks eelmisel aastal läheb reisi aastasse
+      // by the trip's year (trip end date), as in the trips table: a prepayment in the previous year goes to the trip's year
       const travel = (yy) =>
         d3.sum(
           tripRows.filter((r) => String(r.end).slice(0, 4) === yy),

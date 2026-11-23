@@ -8,7 +8,7 @@
     const p = Math.round((v / base) * 100);
     return (p > 0 ? '+' : p < 0 ? '−' : '') + Math.abs(p) + '%';
   };
-  // popover on position:fixed, et tabeli kerimisala seda ei lõikaks; asukoht arvutatakse avamisel
+  // the popover is position:fixed so the table's scroll area does not clip it; its position is computed when it opens
   const fixPop = (host, p, anchor) => {
     const place = () => {
       const r = (anchor || host).getBoundingClientRect(),
@@ -16,7 +16,7 @@
         h = p.offsetHeight;
       const x = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
       const y = r.bottom + 4 + h > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4;
-      // mõni eellane (nt transform) võib olla fixed-elemendi alus: paranda nihe mõõtmise järgi
+      // an ancestor (e.g. with transform) can be the base of a fixed element: correct the offset by measuring
       p.style.left = '0px';
       p.style.top = '0px';
       const o = p.getBoundingClientRect();
@@ -39,13 +39,13 @@
     fixPop(cell, p);
   };
   const yearOn = window.FA.yearOn;
-  // aastad ja perioodid tulevad andmetest (window.FA.PI: aastad, per); uue aasta jaoks ei ole vaja midagi muuta
+  // years and periods come from the data (window.FA.PI: years, periods); nothing needs changing for a new year
   const PI = window.FA.PI,
     YEARS = PI.years,
     selectedYears = () => YEARS.filter((y) => yearOn(y)),
     ALL_YEARS = () => selectedYears().length === YEARS.length;
   const periodYear = (k) => PI.periods[k][0].slice(0, 4);
-  // nähtavad veerud: üks aasta valitud -> selle kvartalid (q), mitu -> valitud aastate poolaastad (p)
+  // visible columns: one year selected -> its quarters (q), several -> half years of the selected years (p)
   const visiblePeriods = () => {
     const ys = selectedYears(),
       t = ys.length === 1 ? 'q' : 'p';
@@ -57,7 +57,7 @@
       mo = +a.slice(5, 7);
     return (k[0] === 'p' ? ROMAN[(mo - 1) / 6] + ' pa ' : ROMAN[(mo - 1) / 3] + ' kv ') + a.slice(2, 4);
   };
-  // tabeli päis perioodide kaupa: esimene veerg, nähtavad perioodid, soovi korral tulba veerg
+  // table header by period: first column, visible periods, optionally a bar column
   const phead = (tb, first, bar) => {
     const tr = tb.closest('table').querySelector('thead tr');
     if (!tr) return;
@@ -196,18 +196,18 @@
   };
   const money = (v) => (v === null || v === undefined || Number.isNaN(+v) ? '' : F.eur(+v));
   const dt = (s) => (s ? (s.length > 7 ? s.slice(8, 10) + '.' : '') + s.slice(5, 7) + '.' + s.slice(0, 4) : '');
-  // telje sildid: üks aasta valitud -> iga kvartal, mõlemad -> iga poolaasta
+  // axis labels: one year selected -> every quarter, both -> every half year
   const halfYears = (rows) => {
     const one = selectedYears().length === 1;
     return rows.map((d) => d.month).filter((mo) => (one ? /-(01|04|07|10)$/.test(mo) : /-(01|07)$/.test(mo)));
   };
-  // kuu nihe: KUU('2026-10', -1) = '2026-09'
+  // month shift: monthAdd('2026-10', -1) = '2026-09'
   const monthAdd = (m, n) => {
     const d = new Date(+m.slice(0, 4), +m.slice(5, 7) - 1 + n, 1);
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   };
   const MONTHS = ['jaan', 'veebr', 'märts', 'apr', 'mai', 'juuni', 'juuli', 'aug', 'sept', 'okt', 'nov', 'dets'];
-  // jooksev kuu graafikutel: kuu lõpu prognoos heleda punktiiriga tulbana; keskmistesse ei lähe
+  // current month on charts: month-end forecast as a light dotted bar; not included in averages
   const CURRENT = () => window.FA.PI.current;
   const monthLabel = (m) => MONTHS[+m.slice(5, 7) - 1] + ' ' + m.slice(2, 4);
   const fcBar = (svg, d, x, y, col, bw, off) =>
@@ -236,7 +236,7 @@
       if (inp !== document.activeElement) inp.value = dash.params().q ?? '';
     })
   );
-  // kuu valik: kuud, mis on valitud aastate kannetes, uuemad ees
+  // month select: months in the transactions of the selected years, newest first
   const monthOn = (r) => {
     const k = dash.params().month;
     return !k || r.date.startsWith(k);
@@ -299,14 +299,14 @@
     sel.classList.toggle('empty', !sel.value);
     sel.onchange = () => dash.setParams({cat: sel.value || null});
   });
-  // kohatäide: näha tühjas lahtris, aga mitte valikute nimekirjas
+  // placeholder: shown in the empty field but not in the option list
   const phOpt = (t) => {
     const o = new Option(t, '');
     o.disabled = true;
     o.hidden = true;
     return o;
   };
-  // valiku tühjendamine: tühi = kõik
+  // clearing the selection: empty = all
   document.querySelectorAll('.selx').forEach((b) =>
     b.addEventListener('click', () => {
       const k = b.dataset.clear;
@@ -421,7 +421,7 @@
       td(tr, String(o.rs.length), 'num');
       td(tr, dd(o.rs[o.rs.length - 1].date) + (o.rs.length > 1 ? ' – ' + dd(o.rs[0].date) : ''), 'ctr');
       tb.append(tr);
-      // alamread (kategooriad ja kanded) ainult valitud saajal: teiste saajate peidetud read tegid lehe telefonis aeglaseks
+      // child rows (categories and transactions) only for the selected payee: hidden rows of the other payees made the page slow on phones
       if (sel) {
         const subs = d3
           .groups(o.rs, (r) => r.category)
@@ -482,7 +482,7 @@
     }
   });
 
-  // ---- Jooksev kuu ----
+  // ---- Current month ----
   const s2b = (v) => (HID() ? F.MASK : (v > 0 ? '+' : v < 0 ? '−' : '') + F.eur2(Math.abs(v)));
   const MONTHS_LONG = [
     'jaanuar',
@@ -507,7 +507,7 @@
           )
         : '';
   });
-  // päise lause: ainult see, mida andmed toetavad (aasta varasemaga võrdlus, kui need kuud on olemas)
+  // heading sentence: only what the data supports (comparison with a year earlier when those months exist)
   D('lead', (el) => {
     const h = dash.data('header'),
       g = dash.data('lead_group');
@@ -633,7 +633,7 @@
       .attr('stroke-opacity', 0.55)
       .attr('stroke-width', 1)
       .attr('stroke-linejoin', 'round');
-    const fcl = act.length && fc.length ? [{day: act[act.length - 1].day, f: act[act.length - 1].a}, ...fc] : fc; // prognoos algab tegelikust seisust
+    const fcl = act.length && fc.length ? [{day: act[act.length - 1].day, f: act[act.length - 1].a}, ...fc] : fc; // the forecast starts from the actual state
     svg
       .append('path')
       .datum(fcl)
@@ -748,7 +748,7 @@
     const pct = (v) => ((v - lo) / span) * 100;
     const OKC = dash.colors[2],
       BADC = 'var(--cds-chart-status-critical)';
-    // tulp a..b; dv = prognoos miinus tavaline, tulba paremas otsas: tavalisest suurem osa tulba sees, väiksem osa tulba järel; good ütleb, kas see on hea (roheline) või halb (punane)
+    // bar a..b; dv = forecast minus typical, at the right end of the bar: a part above typical inside the bar, below typical after it; good says whether it is good (green) or bad (red)
     const bar = (tr, a, b, color, dv = 0, good = false, op = 1) => {
       const cell = td(tr, '', 'wfb');
       const t = document.createElement('div');
@@ -769,7 +769,7 @@
                 [lo2, hi2, color],
                 [hi2, hi2 + d, dc]
               ];
-      // üks ümarate otstega tulp, värvid selle sees: nii on ka väga lühike jupp ümara otsaga
+      // one bar with rounded ends and the colours inside it, so that even a very short piece has a rounded end
       const q0 = Math.max(0, pct(segs[0][0])),
         q1 = Math.min(100, pct(segs[segs.length - 1][1]));
       const w = document.createElement('div');
@@ -784,7 +784,7 @@
           l = Math.abs(segs[0][0]) < 1e-9 ? '0' : R,
           rr = Math.abs(segs[segs.length - 1][1]) < 1e-9 ? '0' : R;
         w.style.borderRadius = `${l} ${rr} ${rr} ${l}`;
-      } // nulljoone poolne ots on sirge
+      } // the end at the zero line is straight
       for (const [x, y, c] of segs) {
         const f = document.createElement('div');
         f.style.flex = Math.max(0, Math.min(100, pct(y)) - Math.max(0, pct(x))) + ' 0 0';
@@ -901,7 +901,7 @@
     }
   });
 
-  // libisev aken tekstina, nt 'juuli–okt 2026'
+  // rolling window as text, e.g. 'juuli–okt 2026'
   const windowText = (w) => {
     const [a, b] = w,
       y1 = a.slice(0, 4),
@@ -920,7 +920,7 @@
   const wfBars = (income, rest) => {
     const lo = Math.min(0, rest),
       span = Math.max(income, 0) - lo || 1;
-    const pct = (v) => Math.max(0, Math.min(100, ((v - lo) / span) * 100)); // väljaspool tulu ja tulemi vahemikku ei joonista
+    const pct = (v) => Math.max(0, Math.min(100, ((v - lo) / span) * 100)); // nothing is drawn outside the range between income and result
     return {
       bar: (tr, a, b, color, soft) => {
         const cell = td(tr, '', 'wfb');
@@ -937,7 +937,7 @@
             l = Math.abs(Math.min(a, b)) < 1e-9 ? '0' : R,
             rr = Math.abs(Math.max(a, b)) < 1e-9 ? '0' : R;
           f.style.borderRadius = `${l} ${rr} ${rr} ${l}`;
-        } // nulljoone poolne ots on sirge
+        } // the end at the zero line is straight
         {
           const z = document.createElement('div');
           z.className = 'wz';
@@ -950,7 +950,7 @@
     };
   };
   const open = new Set();
-  // päis on oma joonis: tbody joonis ei tohi kirjutada väljapoole oma elementi
+  // the header is its own drawing: a tbody drawing must not write outside its element
   D('groups_head', (tr) => {
     tr.replaceChildren();
     const th = (t, cls) => {
@@ -970,7 +970,7 @@
     tb.replaceChildren();
     if (g.status !== 'ok' || c.status !== 'ok') return;
     const inc = kk.status === 'ok' ? kk.data.find((r) => r.metric === 'income') : null;
-    // „Üle jääb“ = kuu tulem (aktsiate müük seda ei suurenda), kuu_keskmine rida net_regular
+    // "Üle jääb" (left over) = the month's result (selling stocks does not add to it), month_average row net_regular
     const nr = kk.status === 'ok' ? kk.data.find((r) => r.metric === 'net_regular') : null;
     const val = (v, p) => (HID() ? (inc ? share(v, +inc[p]) : F.MASK) : F.eur(v));
     const vis = visiblePeriods();
@@ -1097,7 +1097,7 @@
         items.filter((it) => !it.inc),
         vmax
       ) || gmax;
-    // suuremad ees: järjestus kastis näidatud summa (viimaste täiskuude kuu keskmine) järgi
+    // largest first: ordered by the amount shown in the box (monthly average of the last full months)
     const WINR = window.FA.PI.window,
       WIN_PREV = window.FA.PI.window_prev,
       inWin = (d) => d.month >= WINR[0] && d.month <= WINR[1],
@@ -1116,7 +1116,7 @@
       });
       const rs = full.filter((d) => yearOn(d.month));
       if (!rs.some((d) => Math.abs(d.v) >= 0.5)) continue;
-      const prevYear = d3.mean(full.filter(inWinPrev), (d) => d.v); // samad kuud aasta varem
+      const prevYear = d3.mean(full.filter(inWinPrev), (d) => d.v); // the same months a year earlier
       const now = d3.mean(full.filter(inWin), (d) => d.v);
       const ch = prevYear ? (now - prevYear) / Math.abs(prevYear) : 0;
       const box = document.createElement('div');
@@ -1278,7 +1278,7 @@
       tbal = d3.sum(act, (x) => +x.balance || 0);
     const nn = (v) => v === null || v === undefined || v === '';
     const pc = (v, n = 1) => (+v).toLocaleString('et-EE', {minimumFractionDigits: 1, maximumFractionDigits: n}) + '%';
-    // summad tekstis peidetakse koos teiste summadega
+    // amounts in the text are hidden together with the other amounts
     const masked = (c, v) => {
       if (HID()) {
         for (const part of String(v).split(/([0-9][0-9 ]*(?:,[0-9]+)?\s?€)/g)) {
@@ -1398,7 +1398,7 @@
     const months = [...new Set(rows.map((r) => r.month))];
     const lab = Object.fromEntries(rows.map((r) => [r.month, r.label]));
     const balOf = Object.fromEntries(bal.map((r) => [r.month, +r.balance]));
-    // iga laen kahes osas: põhiosa (tume) ja intress koos tasudega (hele)
+    // each loan in two parts: principal (dark) and interest with fees (light)
     const at = (mo, k) => rows.find((r) => r.month === mo && r.loan === k) || {};
     const wide = months.map((mo) =>
       Object.assign(
@@ -1685,7 +1685,7 @@
       });
   });
 
-  // tootluste juures ainult miinusmärk, pluss jääb ära
+  // returns show only the minus sign, no plus
   const noPlus = (s) => String(s).replace(/\+/g, '');
   const PARTS = [
     ['price', 'Kapitali kasv', 0],
@@ -1694,7 +1694,7 @@
     ['fees', 'Kulud', 1]
   ];
   const PM = PARTS;
-  // instrumentide tabel nagu Portfellow: kapitali kasv, valuuta mõju, tulud, kulud
+  // instruments table as in Portfellow: capital growth, currency effect, income, costs
   const TPARTS = [
     ['price', 'Kapitali kasv', 0],
     ['fx', 'Valuuta mõju', 3],
@@ -1866,8 +1866,8 @@
         for (const k of PART_KEYS) o[k] = d3.sum(ys, (yy) => +r[k + '_' + yy] || 0);
         o.total = o.price + o.fx + o.dividends + o.fees;
         o.cost = both ? +r.cost : +r['base_' + ys[0]] || 0;
-        // %-vaates perioodi tootlus XIRR-i järgi (nagu Portfellow); osad jagatakse summa suhtes. XIRR-i puudumisel tootlus / keskmine investeeritud summa.
-        // üks aasta: selle aasta XIRR; kõik aastad: kogu perioodi XIRR; muu valik: aastate tootlused korrutatult
+        // in % view the period return by XIRR (as in Portfellow); parts are split in proportion to the amount. Without XIRR: return / average invested amount.
+        // one year: that year's XIRR; all years: the whole period's XIRR; other selections: the years' returns multiplied
         const xv = both
           ? r.xr_all
           : ys.length === 1
@@ -1902,7 +1902,7 @@
     const sortKey = TS[dash.params().tsort] ? dash.params().tsort : 'total',
       tdir = (dash.params().tdir || 'desc') === 'asc' ? 1 : -1;
     rows.sort((a, b) => tdir * TS[sortKey](a, b) || b.total - a.total);
-    // nullist alates: kapitali kasv, rahavoog, valuutakurss
+    // from zero: capital growth, cash flow, exchange rate
     const st = rows.map((o) => ({d: o, s: stackSigned(o, TPARTS)}));
     const lo = Math.min(0, d3.min(st, (o) => d3.min(o.s, (p) => p.a)) ?? 0),
       hi = Math.max(0, d3.max(st, (o) => d3.max(o.s, (p) => p.b)) ?? 0);
@@ -1962,12 +1962,12 @@
       z.className = 'wz';
       z.style.left = pc(0) + '%';
       t.append(z);
-      // tootluse järgi sorteerides punane eraldusjoon + ja − ridade vahel (ainult esimese negatiivse rea kohal)
+      // when sorted by return, a red line between + and − rows (only above the first negative row)
       const isNeg = tot < -eps;
       if (sortKey === 'total' && negSeen !== null && isNeg !== negSeen) tr.classList.add('negfirst');
       negSeen = isNeg;
       const segs = o.s.filter((p) => Math.abs(p.v) > 0.00005);
-      // üks ümarate otstega tulp, värvid selle sees
+      // one bar with rounded ends and the colours inside it
       if (segs.length) {
         const q0 = pc(d3.min(segs, (p) => p.a)),
           q1 = pc(d3.max(segs, (p) => p.b)),
@@ -1985,7 +1985,7 @@
             l = Math.abs(a0) > 1e-9 ? R : '0',
             rr = Math.abs(b0) > 1e-9 ? R : '0';
           w.style.borderRadius = `${l} ${rr} ${rr} ${l}`;
-        } // nulljoone poolne ots on sirge
+        } // the end at the zero line is straight
         for (const p of segs) {
           const b = document.createElement('div');
           b.style.position = 'absolute';
@@ -2004,7 +2004,7 @@
     }
   });
 
-  // pealkirja juures valitud perioodi kogutootlus: summa ja % (alus nagu tabelis: mõlemad aastad = soetus, üks aasta = aasta alguse väärtus + ostud)
+  // next to the title the selected period's total return: amount and % (base as in the table: both years = cost, one year = value at the start of the year + purchases)
   D('returns_total', (el) => {
     const d = dash.data('returns'),
       vm = dash.data('portfolio_change');
@@ -2023,7 +2023,7 @@
     const i0 = all.indexOf(rows[0]),
       start = i0 > 0 ? +all[i0 - 1].value : 0;
     const mrf = d.data.find((r) => r.kind === 'deposit');
-    // % = perioodi tootlus XIRR-i järgi (nagu Portfellow): rahavood kuu keskel (sissemaksed −, dividendid/intress +), algväärtus −, lõppväärtus +;
+    // % = the period's return by XIRR (as in Portfellow): cash flows in the middle of the month (payments in −, dividends/interest +), start value −, end value +;
     // deposit: average balance in at the start of the period, out with interest at the end
     const t0 = new Date(rows[0].month + '-01'),
       lst = rows[rows.length - 1],
@@ -2201,7 +2201,7 @@
       kd = dash.data('trip_transactions');
     tb.replaceChildren();
     if (d.status !== 'ok' || kd.status !== 'ok') return;
-    // aasta järgi reisi lõpu kuupäev, et ettemaks eelmisel aastal ei viiks reisi valele aastale
+    // the year comes from the trip's end date, so that a prepayment in the previous year does not move the trip to the wrong year
     const rs = d.data.filter((r) => yearOn(r.end));
     const TX = d3.group(kd.data, (x) => x.trip + x.start);
     for (const r of rs) {
@@ -2213,7 +2213,7 @@
       td(tr, dt(r.end), 'ctr');
       td(tr, F.signed(-r.cost), 'num' + (+r.cost < 0 ? ' ok' : ''));
       tb.append(tr);
-      // kanded nagu reisid: uuemad ees
+      // transactions like the trips: newest first
       const kids = [...(TX.get(k) || [])]
         .sort((a, b) => (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')))
         .map((x) => {
@@ -2257,7 +2257,7 @@
       rowClass: (r) => (+r.amount > 0 ? 'okrow' : '')
     })
   );
-  // ---- Püsikulud: laenud lepingu järgi, muu korduvate maksete järgi; muutuv kulu = viimaste täiskuude kulud kokku miinus püsikulud ----
+  // ---- Fixed costs: loans by contract, others by recurring payments; variable cost = total cost of the last full months minus fixed costs ----
   const openF = new Set();
   // sections of fixed costs come from rules.json recurring_kinds: [{kind, section, subscription?, latest_price?}]
   const KIND = Object.fromEntries(window.FA.KINDS.map((k) => [k.kind, k]));
@@ -2431,7 +2431,7 @@
     );
   });
 
-  // ---- Eesmärgid ----
+  // ---- Goals ----
   const gv = (k) => {
     const d = dash.data('goals');
     const r = d.status === 'ok' ? d.data.find((x) => x.metric === k) : null;
@@ -2442,7 +2442,7 @@
     const now = gv(el.dataset.now),
       t = gv(el.dataset.target);
     if (now === null || !t) return;
-    // alguspunktiga eesmärk (nt netovara): edenemine alguspunktist sihini
+    // goal with a starting point (e.g. net worth): progress from the start to the target
     const b0 = el.dataset.base ? gv(el.dataset.base) : null;
     if (b0 !== null) {
       const r = t !== b0 ? (now - b0) / (t - b0) : 0;
@@ -2494,7 +2494,7 @@
       fe && yearOn(J) && !got[0].some((r) => r.month >= J)
         ? {month: J, label: monthLabel(J), net: +fe.value, v: +fe.value}
         : null;
-    // prognoos: järgmised kuud rahavoo prognoosist (jooksev kuu on fc); ainult siis, kui jooksev aasta on valitud
+    // forecast: the next months from the cash-flow forecast (the current month is fc); only when the current year is selected
     const fut = yearOn(J) ? got[3].filter((r) => r.month > J).map((r) => ({...r, net: +r.net, fut: true})) : [];
     const all = [...(fc ? [...rows, fc] : rows), ...fut];
     el.replaceChildren();
@@ -2648,7 +2648,7 @@
         tip.hidden = true;
       });
   });
-  // ---- Netovara: rahalised varad üles, võlad alla, joon = netovara ----
+  // ---- Net worth: assets up, debts down, line = net worth ----
   D('net_chart', (el) => {
     const got = state(el, 'net_worth');
     if (!got) return;
@@ -2692,7 +2692,7 @@
       .attr('y', (d) => y(d.assets))
       .attr('height', (d) => y(0) - y(d.assets))
       .attr('fill', dash.colors[2]);
-    // võlad: täpsed jäägid tumedamalt, hinnanguline osa (vanad laenud) heledamalt
+    // debts: exact balances darker, the estimated part (old loans) lighter
     svg
       .append('g')
       .selectAll('rect')
@@ -2798,7 +2798,7 @@
     el.textContent = F.signed(a.net) + ' · muutus ' + F.signed(a.net - base.net);
   });
 
-  // ---- Tulevik: rahavoog, laenamise hind, pension ----
+  // ---- Future: cash flow, cost of borrowing, pension ----
   D('goal_num', (el) => {
     const d = dash.data(el.dataset.source);
     const r = d.status === 'ok' ? d.data.find((x) => x.metric === el.dataset.where.split('=')[1]) : null;
@@ -2872,14 +2872,14 @@
       tb.append(tr);
     }
   });
-  // ---- Säästumäär (jooksev aasta): investeeringud + laenu põhiosa / tulu ----
+  // ---- Savings rate (current year): (investments + loan principal) / income ----
   D('savings', (el) => {
     const d = dash.data('savings_rate');
     el.replaceChildren();
     if (d.status !== 'ok') return;
     const p = (a, b) => d.data.filter((r) => r.month >= a && r.month <= b);
     const rate = (rs) => d3.sum(rs, (r) => r.invest + r.principal) / d3.sum(rs, (r) => r.income);
-    // viimased täiskuud vs eelmised sama palju kuid (säästumäär arvutatakse ainult jooksva aasta kohta)
+    // last full months vs. the same number of months before (the savings rate is computed only for the current year)
     const WINR = window.FA.PI.window,
       nA = (+WINR[1].slice(0, 4) - +WINR[0].slice(0, 4)) * 12 + (+WINR[1].slice(5) - +WINR[0].slice(5)) + 1;
     const p4 = p(...WINR),
@@ -2910,7 +2910,7 @@
     el.append(big, s1, s2);
   });
 
-  // ---- Võrdlus indeksitega ----
+  // ---- Comparison with indices ----
   D('comparison_table', (tb) => {
     const d = dash.data('comparison');
     tb.replaceChildren();
@@ -2969,7 +2969,7 @@
     }
   });
 
-  // ---- Oodatavad dividendid järgmise 12 kuu jooksul ----
+  // ---- Expected dividends in the next 12 months ----
   D('div_chart', (el) => {
     const got = state(el, 'expected_dividends');
     if (!got) return;
@@ -3004,7 +3004,7 @@
           )
       )
       .call(muteAxis);
-    // kinnitatud (börsil välja kuulutatud) all täisvärviga, hinnang peal heledamalt
+    // confirmed (announced on the exchange) below in full colour, the estimate above it lighter
     const isC = (r) => r.confirmed === true || r.confirmed === 'true';
     const conf = (mo) => d3.sum((by.get(mo) || []).filter(isC), (r) => +r.amount);
     svg
@@ -3070,9 +3070,9 @@
     el.textContent = HID() ? '' : F.eur(d3.sum(d.data, (r) => +r.amount)) + (c ? ' · kinnitatud ' + F.eur2(c) : '');
   });
 
-  // Kokkupandavad kaardid (.fold) on vaikimisi kinni, pealkiri avab ja sulgeb
-  // (avamine käib peidetud märkeruuduga, vt index.html .cardt)
-  // puuteekraanil: ? avab ja sulgeb selgituse koputusega, koputus mujal sulgeb
+  // Folding cards (.fold) are closed by default; the title opens and closes them
+  // (opening uses a hidden checkbox, see index.html .cardt)
+  // on touch screens: tapping ? opens and closes the explanation, tapping elsewhere closes it
   document.addEventListener('click', (e) => {
     const b = e.target.closest('.help');
     if (!b && e.target.closest('.help + .note')) return;
@@ -3084,8 +3084,8 @@
       if (!b.classList.contains('open')) b.blur();
     }
   });
-  // tabeli viimasel nähtaval real pole alumist joont. Klass lastv pannakse siin, mitte CSS-i :has(~ …) abil,
-  // sest see tegi suurte tabelite (Kanded) puhul Safari iga muudatuse peale väga aeglaseks.
+  // the last visible table row has no bottom line. The class lastv is set here and not with CSS :has(~ …),
+  // because that made Safari very slow on every change with large tables (Transactions).
   const lastVis = (tb) => {
     let l = null;
     for (const tr of tb.rows) {
@@ -3112,13 +3112,13 @@
       });
   }).observe(document.body, {subtree: true, childList: true, attributes: true, attributeFilter: ['hidden']});
   document.querySelectorAll('tbody').forEach(lastVis);
-  // vahelehe vahetusel joonista uuesti: peidetud vahelehe graafikud joonistati vaikelaiusega ja olid telefonis liiga madalad
+  // redraw when the tab changes: charts on a hidden tab were drawn at the default width and were too low on phones
   document.querySelectorAll('.fa > input.tabr').forEach((i) =>
     i.addEventListener('change', () => {
       if (i.checked && dash.refresh) requestAnimationFrame(() => dash.refresh());
     })
   );
-  // telefoni pööramisel joonista graafikud uue laiusega
+  // redraw the charts at the new width when the phone is rotated
   let rw = window.innerWidth,
     rt = null;
   window.addEventListener('resize', () => {
