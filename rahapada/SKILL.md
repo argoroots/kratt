@@ -64,12 +64,23 @@ Skriptid vajavad ainult Pythonit (lisapakette pole). Kõik andmed on JSON. Töö
 
 1. **Hoidla töökausta:** hoidla slug on töölaua `files/config.js`-is (`db_get files/config.js` → `"store"`); `list_files` → `read_file(slug, paths=[…])` kõik failid (32 korraga) → kopeeri igaüks oma teele.
 2. **Kanded:** jooksev kuu kõigilt kontodelt; kui eelmine kuu pole lõpuni sees, ka see (`lhv_statement.py` / `merge_tx.py` / `import_statement.py --tx`). Võta alati ka praegused broneeringud: skript eemaldab nende kontode vanad ootel read. Ühenduseta pankade kohta küsi uut väljavõtet või ütle, et need kontod jäävad seekord vanaks.
-3. **Investeeringud:** tehingud, investeerimiskonto, positsioonid, jooksva kuu hinnad `prices.json`-i (fondide osaku hind fondivalitseja avalikust hinnaallikast, kui fondid on), jäägid `balances.json`-i.
+3. **Investeeringud:** tehingud, investeerimiskonto, positsioonid, jooksva kuu hinnad `prices.json`-i (fondide osakuhinnad igal uuendusel, vt „Pensionifondide hinnad“ allpool, kui fondid on), jäägid `balances.json`-i.
 4. **Arvuta** `build.py … --store <hoidla slug>`. Kategooriata kanded: paku olemasolevate kategooriate seast ja küsi (nagu esimese korra 6. sammu lõpus). Uut gruppi ära tee ilma kasutaja nõusolekuta.
 5. **Avalda:**
    - hoidlasse muutunud failid (`publish_files`, patch, `base_version` = `list_files` versioon): uued/muutunud `tx/*.json`, `card_times.json`, `state.json`, muutunud reeglid ja muud failid;
    - töölauale `out/report.json` → `changed_datasets`: lae üles ja `dataset_docs.py rahapada urls.json --op update --only <id> …` (lisa igale op-ile `ifVersion` `db_list datasets` järgi); `files/config.js` iga kord (`update`).
 6. **Kokkuvõte:** lühidalt uued kanded (ootel eraldi), investeeringute muutus ja kuu prognoos. Kui kasutaja on öelnud, millist kokkuvõtet ta tahab, tee see nii.
+
+## Pensionifondide hinnad
+
+Uuenda osakuhinnad iga andmete uuendusega, muidu jääb fondide hinnamuutus kuu tulemisse vana hinnaga.
+
+1. **II ja III samba fondid: Pensionikeskus.** Päevastatistika tabelis on iga fondi viimane NAV ja kuupäev:
+   - II sammas: https://www.pensionikeskus.ee/statistika/ii-sammas/kogumispensioni-paevastatistika/
+   - III sammas: https://www.pensionikeskus.ee/statistika/iii-sammas/taiendava-kogumispensioni-statistika/
+   Kui lehte ei saa veebist lugeda, ava see brauseris ja loe tabelit.
+2. **Muud fondid** (nt Tuleva Täiendav Kogumisfond), mida Pensionikeskuse tabelis pole: fondivalitseja enda lehelt või avalikust hinnaliidesest.
+3. `prices.json` real on `date` NAV-i päev, mitte tänane. Nädalavahetusel hinda ei ole; eelmise tööpäeva NAV ilmub tavaliselt järgmisel tööpäeval.
 
 ## Reeglite muutmine
 
